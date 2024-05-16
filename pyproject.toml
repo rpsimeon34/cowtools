@@ -15,7 +15,7 @@ maintainers = [
     { name = "Ryan Simeon", email = "rsimeon@wisc.edu" }
 ]
 dependencies = [
-    "os",
     "dask_jobqueue>=0.8.5",
-    "dask>=2024.1.0"
+    "dask>=2024.1.0",
+    "setuptools>=68.1.2"
 ]
