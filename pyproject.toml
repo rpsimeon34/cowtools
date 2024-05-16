@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cowtools"
+description = "Convenience tools for physics analyses with the University of Wisconsin-Madison Analysis Facility"
+readme = "README.md"
+version = "0.1"
+requires-python = ">=3.6.8"
+authors = [
+    { name = "Ryan Simeon", email = "rsimeon@wisc.edu" }
+]
+maintainers = [
+    { name = "Ryan Simeon", email = "rsimeon@wisc.edu" }
+]
+dependencies = [
+    "os",
+    "dask_jobqueue>=0.8.5",
+    "dask>=2024.1.0"
+]
