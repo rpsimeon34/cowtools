@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
+
+DEFAULT_SIF = "/home/vassal/notebook.sif"
 
 def move_x509():
     '''
@@ -8,8 +11,6 @@ def move_x509():
     to be used in preparation for creating an HTCondorCluster object (like 
     via GetDefaultCondorClient.
     '''
-    os.environ["CONDOR_CONFIG"] = "/etc/condor/condor_config"
-
     try:
         _x509_localpath = (
             [
@@ -33,19 +34,31 @@ def GetDefaultCondorClient(x509_path, max_workers=50, mem_size=2, disk_size=1):
     '''
     Get a dask.distributed.Client object that can be used for distributed computation with
     an HTCondorCluster. Assumes some default settings for the cluster, including a reasonable
-    timeout, location for log/output/error files, and 
+    timeout, location for log/output/error files, and Singularity image file to ship.
+
+    Inputs:
+        x509_path: (str) Path to the x509 proxy to ship to workers
+
+    Returns:
+        (dask.distributed.Client) A client connected to an HTCondor cluster
     '''
-    SINGULARITY_IMAGE = '"/cvmfs/unpacked.cern.ch/registry.hub.docker.com/coffeateam/coffea-base:v2024.1.2"'
-    print(f"Using image {SINGULARITY_IMAGE}. If this does not match your AF server's image, errors are likely at runtime.")
+    os.environ["CONDOR_CONFIG"] = "/etc/condor/condor_config"
+
     memory = str(mem_size) + " GB"
     disk = str(disk_size) + " GB"
-    initial_dir = f'/scratch/{os.environ["USER"]}'
+    initial_dir = f"/scratch/{os.environ['USER']}"
+
+    custom_sif = Path(f"/scratch/os.environ['USER']/notebook.sif")
+    if custom_sif.is_file():
+        sif_loc = str(custom_sif)
+    else:
+        sif_loc = DEFAULT_SIF
+        
     cluster = HTCondorCluster(
         cores=1,
         memory=memory,
         disk=disk,
         death_timeout = '60',
-        #python="/usr/local/bin/python3.8",
         job_extra_directives={
             "+JobFlavour": '"tomorrow"',
             "log": "dask_job_output.$(PROCESS).$(CLUSTER).log",
@@ -53,10 +66,10 @@ def GetDefaultCondorClient(x509_path, max_workers=50, mem_size=2, disk_size=1):
             "error": "dask_job_output.$(PROCESS).$(CLUSTER).err",
             "should_transfer_files": "yes",
             "when_to_transfer_output": "ON_EXIT_OR_EVICT",
-            "+SingularityImage": SINGULARITY_IMAGE,
+            "+SingularityImage": '"notebook.sif"',
             "Requirements": "HasSingularityJobStart",
             "InitialDir": initial_dir,
-            "transfer_input_files": f'{x509_path}'
+            "transfer_input_files": f'{x509_path},{sif_loc}', 
         },
         job_script_prologue=[
             "export XRD_RUNFORKHANDLER=1",
