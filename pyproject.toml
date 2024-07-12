@@ -19,3 +19,22 @@ dependencies = [
     "dask>=2024.1.0",
     "setuptools>=68.1.2"
 ]
+
+[project.optional-dependencies]
+test = [
+    "pytest"
+]
+
+dev = [
+    "pytest",
+    "pre-commit"
+]
+
+[tool.ruff]
+select = [
+    "E","F", "W",
+    "B",
+    "I",
+    "RUF",
+    "UP",
+]
