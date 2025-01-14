@@ -57,23 +57,42 @@ def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_
 
     if not image_loc:
         image_loc = _find_image()
-        
+
+    # set up job_extra_directives
+    job_extra_directives = {
+        "container_image": image_loc,
+        "+JobFlavour": '"tomorrow"',
+         "log": "dask_job_output.$(PROCESS).$(CLUSTER).log",
+         "output": "dask_job_output.$(PROCESS).$(CLUSTER).out",
+         "error": "dask_job_output.$(PROCESS).$(CLUSTER).err",
+         "when_to_transfer_output": "ON_EXIT_OR_EVICT",
+         "InitialDir": initial_dir,
+         'transfer_input_files':[],
+     }
+    # create transfer_input_files list:
+    if os.path.isfile(image_loc) and 'cvmfs' not in image_loc:
+        # this is a local file not in CVMFS or docker and needs to be
+        # transferred to Condor
+        job_extra_directives['transfer_input_files'].append(image_loc)
+    if x509_path is not None:
+        job_extra_directives['transfer_input_files'].append(x509_path)
+
+    if job_extra_directives['transfer_input_files'] == []:
+        # no files are set to be transferred 
+        del(job_extra_directives['transfer_input_files'])
+    else:
+        job_extra_directives['transfer_input_files'] = ','.join(job_extra_directives['transfer_input_files'])
+
+    if 'transfer_input_files' in job_extra_directives:
+       job_extra_directives['should_transfer_files'] = 'YES'
+
+    print_debug(job_extra_directives)
     cluster = HTCondorCluster(
         cores=1,
         memory=memory,
         disk=disk,
         death_timeout = '60',
-        job_extra_directives={
-            "+JobFlavour": '"tomorrow"',
-            "log": "dask_job_output.$(PROCESS).$(CLUSTER).log",
-            "output": "dask_job_output.$(PROCESS).$(CLUSTER).out",
-            "error": "dask_job_output.$(PROCESS).$(CLUSTER).err",
-            "should_transfer_files": "yes",
-            "when_to_transfer_output": "ON_EXIT_OR_EVICT",
-            "container_image": f"{image_loc}",
-            "InitialDir": initial_dir,
-            "transfer_input_files": f'{x509_path},{image_loc}', 
-        },
+        job_extra_directives=job_extra_directives,
         job_script_prologue=[
             "export XRD_RUNFORKHANDLER=1",
             f"export X509_USER_PROXY={x509_path}",
