@@ -1,4 +1,4 @@
-import json
+import yaml
 import os
 from pathlib import Path
 from dask_jobqueue import HTCondorCluster
@@ -81,29 +81,30 @@ def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_
 
 def _find_image():
     custom_sif = Path(f"/scratch/{os.environ['USER']}/notebook.sif")
-    container_info_file = Path(f"/container-info.json")
+    container_info_file = Path(f"/tmp/container_info.yml")
     #If there is a custom SIF at /scratch/${USER}/notebook.sif, use that
     if custom_sif.is_file():
         return str(custom_sif)
-    #If there is no custom SIF, but an image source is given in /container-info.json, use that
+    #If there is no custom SIF, but an image source is given in container_info_file, use that
     if container_info_file.is_file():
         with open(container_info_file) as f:
-            container_info = json.load(f)
+            container_info = yaml.safe_load(f)
         try:
             container_source = container_info["container_source"]
         except KeyError:
-            raise Exception("/container-info.json is missing expected key 'container_source'")
+            raise Exception(f"{container_info_file} is missing expected key 'container_source'")
         #For now, only using image source if it's from a Docker repo
         if container_source.startswith("docker.io"):
             return f"docker://{container_source}"
         else:
-            raise Exception(f"""/container-info.json indicates that the AF image is based on {container_source}.
+            raise Exception(f"""{container_info_file} indicates that the AF image is based on {container_source}.
                             However, only docker images (where container_source starts with "docker.io") can
                             currently be automatically detected and retrieved by cowtools. Please explicitly
                             specify the image to be used on workers to GetCondorClient with the image_loc
                             keyword.""")
 
-    raise Exception("""Could not automatically find an image to ship to workers.
-                     This likely means that there is no metadata file "/container-info.json".
+    raise Exception(f"""Could not automatically find an image to ship to workers.
+                     This likely means that there is no metadata file "{container_info_file}".
                      Please explicitly specify the image to be used on workers to GetCondorClient
                      with the image_loc keyword.""")
+
