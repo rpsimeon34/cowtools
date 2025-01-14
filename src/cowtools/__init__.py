@@ -86,11 +86,12 @@ def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_
 
 def _find_image():
     custom_sif = Path(f"/scratch/{os.environ['USER']}/notebook.sif")
-    container_info_file = Path(f"/tmp/container_info.yml")
     #If there is a custom SIF at /scratch/${USER}/notebook.sif, use that
     if custom_sif.is_file():
         return str(custom_sif)
+
     #If there is no custom SIF, but an image source is given in container_info_file, use that
+    container_info_file = Path(f"/container_info.yml")
     if container_info_file.is_file():
         with open(container_info_file) as f:
             container_info = yaml.safe_load(f)
@@ -99,15 +100,41 @@ def _find_image():
             container_source = container_info["container_source"]
         except KeyError:
             raise Exception(f"{container_info_file} is missing expected key 'container_source'")
-        #For now, only using image source if it's from a Docker repo
-        if container_source.startswith("docker.io"):
-            return f"docker://{container_source}"
-        else:
-            raise Exception(f"""{container_info_file} indicates that the AF image is based on {container_source}.
-                            However, only docker images (where container_source starts with "docker.io") can
-                            currently be automatically detected and retrieved by cowtools. Please explicitly
-                            specify the image to be used on workers to GetCondorClient with the image_loc
-                            keyword.""")
+
+        # assume container_source is a valid container_image value
+        best_loc=container_source
+        # list of CVMFS directories to check
+        cvmfsdirs = ['/cvmfs/unpacked.cern.ch/']
+        # try to improve the container_image path to something more local
+        for dir in cvmfsdirs:
+            if os.path.isdir(dir):
+                cvmfspath = os.path.join(dir)
+                # try to find the same container in the local path
+                if 'docker' in container_source:
+                    # assume registry.hub.docker.com
+                    cvmfspath = os.path.join(cvmfspath,'registry.hub.docker.com')
+                if 'coffeateam' in container_source:
+                    cvmfspath = os.path.join(cvmfspath,'coffeateam')
+
+                # append filename to constructed path
+                cvmfspath = os.path.join(cvmfspath,os.path.basename(container_source))
+                if os.path.isdir(cvmfspath):
+                    best_loc = cvmfspath
+                    # assume first found location is best
+                    break
+                else:
+                    print_debug(f"{cvmfspath} does not exist, so leaving as {best_loc}")
+            else:
+                print_debug(f"Directory '{dir}' does not exist, so leaving as {best_loc}")
+
+        # container_source follows the Dockerfile syntax of
+        # FROM container:tag
+        # which omits the 'docker://' part of the container URL
+        # so prepend that to make a valid container_image path
+        if best_loc.startswith('docker.io'):
+            best_loc=f"docker://{best_loc}"
+
+        return best_loc
 
     raise Exception(f"""Could not automatically find an image to ship to workers.
                      This likely means that there is no metadata file "{container_info_file}".
