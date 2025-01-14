@@ -4,6 +4,11 @@ from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
 
+# print when run from command line
+def print_debug(message):
+   if __name__ == "__main__":
+       print(message)
+
 def move_x509():
     '''
     Get x509 path, copy it to the correct location, and return the path. Primarily
@@ -89,6 +94,7 @@ def _find_image():
     if container_info_file.is_file():
         with open(container_info_file) as f:
             container_info = yaml.safe_load(f)
+            print_debug(container_info)
         try:
             container_source = container_info["container_source"]
         except KeyError:
