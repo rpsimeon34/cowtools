@@ -137,7 +137,7 @@ def _find_image():
 
                 # append filename to constructed path
                 cvmfspath = os.path.join(cvmfspath,os.path.basename(container_source))
-                if os.path.isdir(cvmfspath):
+                if os.path.exists(cvmfspath):
                     best_loc = cvmfspath
                     # assume first found location is best
                     break
