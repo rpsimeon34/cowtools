@@ -4,11 +4,6 @@ from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
 
-# print when run from command line
-def print_debug(message):
-   if __name__ == "__main__":
-       print(message)
-
 def move_x509():
     '''
     Get x509 path, copy it to the correct location, and return the path. Primarily
@@ -160,3 +155,7 @@ def _find_image():
                      Please explicitly specify the image to be used on workers to GetCondorClient
                      with the image_loc keyword.""")
 
+# print when run from command line
+def print_debug(message):
+   if __name__ == "__main__":
+       print(message)
