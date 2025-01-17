@@ -4,36 +4,11 @@ from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
 
-def move_x509():
-    '''
-    Get x509 path, copy it to the correct location, and return the path. Primarily
-    to be used in preparation for creating an HTCondorCluster object (like 
-    via GetCondorClient.
-    '''
-    try:
-        _x509_localpath = (
-            [
-                line
-                for line in os.popen("voms-proxy-info").read().split("\n")
-                if line.startswith("path")
-            ][0]
-            .split(":")[-1]
-            .strip()
-        )
-    except Exception as err:
-        raise RuntimeError(
-            "x509 proxy could not be parsed, try creating it with 'voms-proxy-init'"
-        ) from err
-    _x509_path = f'/scratch/{os.environ["USER"]}/{_x509_localpath.split("/")[-1]}'
-    os.system(f"cp {_x509_localpath} {_x509_path}")
-    _x509_path = os.path.basename(_x509_localpath)
-    return _x509_path
-
-def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_size=1):
+def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, disk_size=1):
     '''
     Get a dask.distributed.Client object that can be used for distributed computation with
     an HTCondorCluster. Assumes some default settings for the cluster, including a reasonable
-    timeout, location for log/output/error files, and Singularity image file to ship.
+    timeout, location for log/output/error files, and image file to ship.
 
     Inputs:
         x509_path: (str) Path to the x509 proxy to ship to workers.
@@ -52,6 +27,8 @@ def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_
 
     if not image_loc:
         image_loc = _find_image()
+
+    x509_path = _find_x509(x509_path)
 
     # set up job_extra_directives
     job_extra_directives = {
@@ -94,7 +71,6 @@ def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_
         ]
     )
     print('Condor logs, output files, error files in {}'.format(initial_dir))
-    print(f"Condor will run dask workers in container {image_loc}")
     cluster.adapt(minimum=1, maximum=max_workers)
     return Client(cluster)
 
@@ -158,6 +134,38 @@ def _find_image():
                      Please explicitly specify the image to be used on workers to GetCondorClient
                      with the image_loc keyword.""")
 
+def _find_x509(x509_path):
+    '''
+    Attempt to find the voms x509 proxy.
+    '''
+
+    if x509_path and os.path.isfile(x509_path):
+        return x509_path
+    elif x509_path:
+        # The user supplied x509_path could not be found.
+        print(f"Could not find voms proxy at {x509_path}, but continuing anyway.")
+        print("Xrootd transfers will most likely fail.")
+        return None
+    else:
+        # try to find voms proxy automatically
+        try:
+            _x509_localpath = (
+                [
+                    line
+                    for line in os.popen("voms-proxy-info").read().split("\n")
+                    if line.startswith("path")
+                ][0]
+                .split(":")[-1]
+                .strip()
+            )
+        except Exception as err:
+            print(f"Could not find voms proxy, but continuing anyway.")
+            print("Xrootd transfers will most likely fail.")
+            return None
+
+        return _x509_localpath
+
+
 # print when run from command line
 def print_debug(message):
    if __name__ == "__main__":
@@ -172,4 +180,4 @@ print('for more usage info visit https://github.com/rpsimeon34/cowtools')
 
 if __name__ == "__main__":
     # for testing at command line, won't be triggered by 'import cowtools'
-    GetCondorClient(x509_path='dog')
+    GetCondorClient()
