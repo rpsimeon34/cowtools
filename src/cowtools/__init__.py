@@ -4,16 +4,11 @@ from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
 
-# print when run from command line
-def print_debug(message):
-   if __name__ == "__main__":
-       print(message)
-
 def move_x509():
     '''
     Get x509 path, copy it to the correct location, and return the path. Primarily
     to be used in preparation for creating an HTCondorCluster object (like 
-    via GetDefaultCondorClient.
+    via GetCondorClient.
     '''
     try:
         _x509_localpath = (
@@ -99,9 +94,9 @@ def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_
         ]
     )
     print('Condor logs, output files, error files in {}'.format(initial_dir))
+    print(f"Condor will run dask workers in container {image_loc}")
     cluster.adapt(minimum=1, maximum=max_workers)
-    client = Client(cluster)
-    return client
+    return Client(cluster)
 
 def _find_image():
     custom_sif = Path(f"/scratch/{os.environ['USER']}/notebook.sif")
@@ -120,6 +115,7 @@ def _find_image():
         except KeyError:
             raise Exception(f"{container_info_file} is missing expected key 'container_source'")
 
+        print_debug(container_source)
         # assume container_source is a valid container_image value
         best_loc=container_source
         # list of CVMFS directories to check
@@ -127,6 +123,7 @@ def _find_image():
         # try to improve the container_image path to something more local
         for dir in cvmfsdirs:
             if os.path.isdir(dir):
+                print_debug(f"Directory '{dir}' exists.")
                 cvmfspath = os.path.join(dir)
                 # try to find the same container in the local path
                 if 'docker' in container_source:
@@ -137,6 +134,7 @@ def _find_image():
 
                 # append filename to constructed path
                 cvmfspath = os.path.join(cvmfspath,os.path.basename(container_source))
+                print_debug('verifing existence of ' + cvmfspath)
                 if os.path.exists(cvmfspath):
                     best_loc = cvmfspath
                     # assume first found location is best
@@ -160,3 +158,18 @@ def _find_image():
                      Please explicitly specify the image to be used on workers to GetCondorClient
                      with the image_loc keyword.""")
 
+# print when run from command line
+def print_debug(message):
+   if __name__ == "__main__":
+       print(message)
+
+# main
+print('Basic usage:')
+print('import cowtools')
+print('client = cowtools.GetCondorClient()')
+print('')
+print('for more usage info visit https://github.com/rpsimeon34/cowtools')
+
+if __name__ == "__main__":
+    # for testing at command line, won't be triggered by 'import cowtools'
+    GetCondorClient(x509_path='dog')
