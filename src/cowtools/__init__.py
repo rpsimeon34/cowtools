@@ -115,6 +115,7 @@ def _find_image():
         except KeyError:
             raise Exception(f"{container_info_file} is missing expected key 'container_source'")
 
+        print_debug(container_source)
         # assume container_source is a valid container_image value
         best_loc=container_source
         # list of CVMFS directories to check
@@ -122,6 +123,7 @@ def _find_image():
         # try to improve the container_image path to something more local
         for dir in cvmfsdirs:
             if os.path.isdir(dir):
+                print_debug(f"Directory '{dir}' exists.")
                 cvmfspath = os.path.join(dir)
                 # try to find the same container in the local path
                 if 'docker' in container_source:
@@ -132,6 +134,7 @@ def _find_image():
 
                 # append filename to constructed path
                 cvmfspath = os.path.join(cvmfspath,os.path.basename(container_source))
+                print_debug('verifing existence of ' + cvmfspath)
                 if os.path.exists(cvmfspath):
                     best_loc = cvmfspath
                     # assume first found location is best
@@ -166,3 +169,7 @@ print('import cowtools')
 print('client = cowtools.GetCondorClient()')
 print('')
 print('for more usage info visit https://github.com/rpsimeon34/cowtools')
+
+if __name__ == "__main__":
+    # for testing at command line, won't be triggered by 'import cowtools'
+    GetCondorClient(x509_path='dog')
