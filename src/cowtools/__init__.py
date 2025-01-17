@@ -159,3 +159,10 @@ def _find_image():
 def print_debug(message):
    if __name__ == "__main__":
        print(message)
+
+# main
+print('Basic usage:')
+print('import cowtools')
+print('client = cowtools.GetCondorClient()')
+print('')
+print('for more usage info visit https://github.com/rpsimeon34/cowtools')
