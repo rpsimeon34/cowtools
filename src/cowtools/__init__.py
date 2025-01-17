@@ -94,9 +94,9 @@ def GetCondorClient(x509_path, image_loc=None, max_workers=50, mem_size=2, disk_
         ]
     )
     print('Condor logs, output files, error files in {}'.format(initial_dir))
+    print(f"Condor will run dask workers in container {image_loc}")
     cluster.adapt(minimum=1, maximum=max_workers)
-    client = Client(cluster)
-    return client
+    return Client(cluster)
 
 def _find_image():
     custom_sif = Path(f"/scratch/{os.environ['USER']}/notebook.sif")
