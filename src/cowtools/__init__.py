@@ -8,7 +8,7 @@ def move_x509():
     '''
     Get x509 path, copy it to the correct location, and return the path. Primarily
     to be used in preparation for creating an HTCondorCluster object (like 
-    via GetDefaultCondorClient.
+    via GetCondorClient.
     '''
     try:
         _x509_localpath = (
