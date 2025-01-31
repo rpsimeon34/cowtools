@@ -41,6 +41,8 @@ def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, 
          "InitialDir": initial_dir,
          'transfer_input_files':[],
      }
+    # set up job_script_prologue
+    job_script_prologue = ["export XRD_RUNFORKHANDLER=1"]
     # create transfer_input_files list:
     if os.path.isfile(image_loc) and 'cvmfs' not in image_loc:
         # this is a local file not in CVMFS or docker and needs to be
@@ -48,7 +50,7 @@ def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, 
         job_extra_directives['transfer_input_files'].append(image_loc)
     if x509_path is not None:
         job_extra_directives['transfer_input_files'].append(x509_path)
-
+        job_script_prologue.append(f"export X509_USER_PROXY={os.path.basename(x509_path)}")
     if job_extra_directives['transfer_input_files'] == []:
         # no files are set to be transferred 
         del(job_extra_directives['transfer_input_files'])
@@ -65,10 +67,7 @@ def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, 
         disk=disk,
         death_timeout = '60',
         job_extra_directives=job_extra_directives,
-        job_script_prologue=[
-            "export XRD_RUNFORKHANDLER=1",
-            f"export X509_USER_PROXY={x509_path}",
-        ]
+        job_script_prologue=job_script_prologue,
     )
     print('Condor logs, output files, error files in {}'.format(initial_dir))
     cluster.adapt(minimum=1, maximum=max_workers)
