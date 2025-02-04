@@ -40,6 +40,8 @@ def GetCondorClient(x509_path=None, container_image=None, maximum=50, memory='2 
          'transfer_input_files':[],
          #"Requirements": "Microarch != \"x86_64-v2\"",
      }
+    # set up job_script_prologue
+    job_script_prologue = ["export XRD_RUNFORKHANDLER=1"]
     # create transfer_input_files list:
     if os.path.isfile(container_image) and 'cvmfs' not in container_image:
         # this is a local file not in CVMFS or docker and needs to be
@@ -47,7 +49,7 @@ def GetCondorClient(x509_path=None, container_image=None, maximum=50, memory='2 
         job_extra_directives['transfer_input_files'].append(container_image)
     if x509_path is not None:
         job_extra_directives['transfer_input_files'].append(x509_path)
-
+        job_script_prologue.append(f"export X509_USER_PROXY={os.path.basename(x509_path)}")
     if job_extra_directives['transfer_input_files'] == []:
         # no files are set to be transferred 
         del(job_extra_directives['transfer_input_files'])
@@ -64,10 +66,7 @@ def GetCondorClient(x509_path=None, container_image=None, maximum=50, memory='2 
         disk=disk,
         death_timeout = '60',
         job_extra_directives=job_extra_directives,
-        job_script_prologue=[
-            "export XRD_RUNFORKHANDLER=1",
-            f"export X509_USER_PROXY={x509_path}",
-        ]
+        job_script_prologue=job_script_prologue,
     )
     print(f"dask workers will run in {container_image}")
     print('Condor logs, output files, error files in {}'.format(initial_dir))
