@@ -4,7 +4,14 @@ from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
 
-def GetCondorClient(x509_path=None, container_image=None, maximum=50, memory='2 GB', disk='1 GB'):
+def GetCondorClient(
+    x509_path=None,
+    container_image=None,
+    maximum=None,
+    max_workers=None,    # synonym for 'maximum'
+    memory='2 GB',
+    disk='1 GB'
+):
     '''
     Get a dask.distributed.Client object that can be used for distributed computation with
     an HTCondorCluster. Assumes some default settings for the cluster, including a reasonable
@@ -19,6 +26,17 @@ def GetCondorClient(x509_path=None, container_image=None, maximum=50, memory='2 
     Returns:
         (dask.distributed.Client) A client connected to an HTCondor cluster.
     '''
+
+    # Make maximum and max_workers a synonym
+    if maximum == None and max_workers == None:
+        maximum = 50
+    elif max_workers != None and maximum == None:
+        maximum = max_workers
+    elif max_workers == None and maximum != None:
+        pass
+    else:
+        raise Exception('Only one of max_workers and maximum should be set.')
+
     os.environ["CONDOR_CONFIG"] = "/etc/condor/condor_config"
 
     initial_dir = f"/scratch/{os.environ['USER']}"
