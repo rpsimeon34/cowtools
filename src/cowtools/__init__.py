@@ -1,7 +1,11 @@
-from .jobqueue import GetCondorClient
+from jobqueue import GetCondorClient
+from data_tools import combine_rename_results,scale_results,XSecScaler
 
 __all__ = [
-    "GetCondorClient"
+    "GetCondorClient",
+    "combine_rename_results",
+    "scale_results",
+    "XSecScaler"
 ]
 
 # print when run from command line
