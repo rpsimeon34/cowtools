@@ -28,11 +28,11 @@ def GetCondorClient(
     '''
 
     # Make maximum and max_workers a synonym
-    if maximum == None and max_workers == None:
+    if maximum is None and max_workers is None:
         maximum = 50
-    elif max_workers != None and maximum == None:
+    elif max_workers is not None and maximum is None:
         maximum = max_workers
-    elif max_workers == None and maximum != None:
+    elif max_workers is None and maximum is not None:
         pass
     else:
         raise Exception('Only one of max_workers and maximum should be set.')
@@ -56,7 +56,6 @@ def GetCondorClient(
          "when_to_transfer_output": "ON_EXIT_OR_EVICT",
          "InitialDir": initial_dir,
          'transfer_input_files':[],
-         #"Requirements": "Microarch != \"x86_64-v2\"",
      }
     # set up job_script_prologue
     job_script_prologue = ["export XRD_RUNFORKHANDLER=1"]
