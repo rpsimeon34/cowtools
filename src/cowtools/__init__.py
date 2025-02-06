@@ -4,7 +4,14 @@ from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
 
-def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, disk_size=1):
+def GetCondorClient(
+    x509_path=None,
+    container_image=None,
+    maximum=None,
+    max_workers=None,    # synonym for 'maximum'
+    memory='2 GB',
+    disk='1 GB'
+):
     '''
     Get a dask.distributed.Client object that can be used for distributed computation with
     an HTCondorCluster. Assumes some default settings for the cluster, including a reasonable
@@ -12,27 +19,36 @@ def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, 
 
     Inputs:
         x509_path: (str) Path to the x509 proxy to ship to workers.
-        image_loc: (str) Path to the image to be sent to worker nodes. Must be
+        container_image: (str) Path to the image to be sent to worker nodes. Must be
                     something that HTCondor accepts under the "container_image"
                     classAd.
 
     Returns:
         (dask.distributed.Client) A client connected to an HTCondor cluster.
     '''
+
+    # Make maximum and max_workers a synonym
+    if maximum is None and max_workers is None:
+        maximum = 50
+    elif max_workers is not None and maximum is None:
+        maximum = max_workers
+    elif max_workers is None and maximum is not None:
+        pass
+    else:
+        raise Exception('Only one of max_workers and maximum should be set.')
+
     os.environ["CONDOR_CONFIG"] = "/etc/condor/condor_config"
 
-    memory = str(mem_size) + " GB"
-    disk = str(disk_size) + " GB"
     initial_dir = f"/scratch/{os.environ['USER']}"
 
-    if not image_loc:
-        image_loc = _find_image()
+    if not container_image:
+        container_image = _find_image()
 
     x509_path = _find_x509(x509_path)
 
     # set up job_extra_directives
     job_extra_directives = {
-        "container_image": image_loc,
+        "container_image": container_image,
         "+JobFlavour": '"tomorrow"',
          "log": "dask_job_output.$(PROCESS).$(CLUSTER).log",
          "output": "dask_job_output.$(PROCESS).$(CLUSTER).out",
@@ -44,10 +60,10 @@ def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, 
     # set up job_script_prologue
     job_script_prologue = ["export XRD_RUNFORKHANDLER=1"]
     # create transfer_input_files list:
-    if os.path.isfile(image_loc) and 'cvmfs' not in image_loc:
+    if os.path.isfile(container_image) and 'cvmfs' not in container_image:
         # this is a local file not in CVMFS or docker and needs to be
         # transferred to Condor
-        job_extra_directives['transfer_input_files'].append(image_loc)
+        job_extra_directives['transfer_input_files'].append(container_image)
     if x509_path is not None:
         job_extra_directives['transfer_input_files'].append(x509_path)
         job_script_prologue.append(f"export X509_USER_PROXY={os.path.basename(x509_path)}")
@@ -69,8 +85,9 @@ def GetCondorClient(x509_path=None, image_loc=None, max_workers=50, mem_size=2, 
         job_extra_directives=job_extra_directives,
         job_script_prologue=job_script_prologue,
     )
+    print(f"dask workers will run in {container_image}")
     print('Condor logs, output files, error files in {}'.format(initial_dir))
-    cluster.adapt(minimum=1, maximum=max_workers)
+    cluster.adapt(minimum=1, maximum=maximum)
     return Client(cluster)
 
 def _find_image():
@@ -131,7 +148,7 @@ def _find_image():
     raise Exception(f"""Could not automatically find an image to ship to workers.
                      This likely means that there is no metadata file "{container_info_file}".
                      Please explicitly specify the image to be used on workers to GetCondorClient
-                     with the image_loc keyword.""")
+                     with the container_image keyword.""")
 
 def _find_x509(x509_path):
     '''
@@ -171,12 +188,6 @@ def print_debug(message):
        print(message)
 
 # main
-print('Basic usage:')
-print('import cowtools')
-print('client = cowtools.GetCondorClient()')
-print('')
-print('for more usage info visit https://github.com/rpsimeon34/cowtools')
-
 if __name__ == "__main__":
     # for testing at command line, won't be triggered by 'import cowtools'
     GetCondorClient()
