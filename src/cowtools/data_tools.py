@@ -7,8 +7,8 @@ DEFAULT_GROUPING_MAP = {
     "QCD": lambda dset: dset.startswith("/QCD"),
     "ZJets": lambda dset: dset.startswith("/Zto2Q"),
     "ttbar": lambda dset: dset.startswith("/TTto"),
-    "SingleTop": lambda dset: dset.startswith("TWminus") or dset.startswith("TbarWplus"),
-    "Diboson": lambda dset: dset.startswith("WWto") or dset.startswith("ZZto")
+    "SingleTop": lambda dset: dset.startswith("/TWminus") or dset.startswith("/TbarWplus"),
+    "Diboson": lambda dset: dset.startswith("/WWto") or dset.startswith("/ZZto")
 }
 
 def combine_rename_results(in_hists,grouping_map={},short_name_map={}):
