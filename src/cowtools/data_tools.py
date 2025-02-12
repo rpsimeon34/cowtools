@@ -5,7 +5,10 @@ import warnings
 
 DEFAULT_GROUPING_MAP = {
     "QCD": lambda dset: dset.startswith("/QCD"),
-    "ZJets": lambda dset: dset.startswith("/Zto2Q")
+    "ZJets": lambda dset: dset.startswith("/Zto2Q"),
+    "ttbar": lambda dset: dset.startswith("/TTto"),
+    "SingleTop": lambda dset: dset.startswith("TWminus") or dset.startswith("TbarWplus"),
+    "Diboson": lambda dset: dset.startswith("WWto") or dset.startswith("ZZto")
 }
 
 def combine_rename_results(in_hists,grouping_map={},short_name_map={}):
@@ -180,7 +183,10 @@ class XSecScaler:
         mc_xsecs = {}
         mc_evt_cnts = {}
         for dset in self.mc:
-            mc_xsecs[dset] = self.fs_mc[dset]["metadata"]["metadata"]["xsec"]
+            try:
+                mc_xsecs[dset] = self.fs_mc[dset]["metadata"]["xsec"]
+            except KeyError:
+                mc_xsecs[dset] = self.fs_mc[dset]["metadata"]["metadata"]["xsec"]
             mc_evt_cnts[dset] = self.mc[dset]["RawEventCount"]
         self._scaled_mc = scale_results(self.mc,self.lumi,mc_xsecs,mc_evt_cnts)
 
