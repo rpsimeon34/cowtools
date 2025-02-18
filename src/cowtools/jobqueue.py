@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
-from .utils import print_debug
 
 def GetCondorClient(
     x509_path=None,
@@ -181,3 +180,8 @@ def _find_x509(x509_path):
             return None
 
         return _x509_localpath
+    
+# print when run from command line
+def print_debug(message):
+   if __name__ == "__main__":
+       print(message)
