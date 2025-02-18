@@ -180,3 +180,8 @@ def _find_x509(x509_path):
             return None
 
         return _x509_localpath
+    
+# print when run from command line
+def print_debug(message):
+   if __name__ == "__main__":
+       print(message)
