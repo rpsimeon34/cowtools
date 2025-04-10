@@ -190,3 +190,10 @@ def _find_x509(x509_path):
 def print_debug(message):
    if __name__ == "__main__":
        print(message)
+
+# for testing at command line, won't be triggered by 'import cowtools'
+# run:
+# python3 thisfile.py
+if __name__ == "__main__":
+    print('executing code from ' + os.path.abspath(__file__))
+    GetCondorClient()
