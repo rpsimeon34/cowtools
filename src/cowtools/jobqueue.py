@@ -8,9 +8,10 @@ def GetCondorClient(
     x509_path=None,
     container_image=None,
     maximum=None,
-    max_workers=None,    # synonym for 'maximum'
+    max_workers=None,    # max_workers is synonym for 'maximum'
     memory='2 GB',
-    disk='1 GB'
+    disk='1 GB',
+    requirements=None
 ):
     '''
     Get a dask.distributed.Client object that can be used for distributed computation with
@@ -68,7 +69,7 @@ def GetCondorClient(
         job_extra_directives['transfer_input_files'].append(x509_path)
         job_script_prologue.append(f"export X509_USER_PROXY={os.path.basename(x509_path)}")
     if job_extra_directives['transfer_input_files'] == []:
-        # no files are set to be transferred 
+        # no files are set to be transferred
         del(job_extra_directives['transfer_input_files'])
     else:
         job_extra_directives['transfer_input_files'] = ','.join(job_extra_directives['transfer_input_files'])
@@ -76,6 +77,10 @@ def GetCondorClient(
     if 'transfer_input_files' in job_extra_directives:
        job_extra_directives['should_transfer_files'] = 'YES'
 
+    if requirements:
+       job_extra_directives['Requirements'] = requirements
+
+    print_debug('job_extra_directives')
     print_debug(job_extra_directives)
     cluster = HTCondorCluster(
         cores=1,
@@ -185,3 +190,10 @@ def _find_x509(x509_path):
 def print_debug(message):
    if __name__ == "__main__":
        print(message)
+
+# for testing at command line, won't be triggered by 'import cowtools'
+# run:
+# python3 thisfile.py
+if __name__ == "__main__":
+    print('executing code from ' + os.path.abspath(__file__))
+    GetCondorClient()
