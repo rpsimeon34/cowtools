@@ -11,7 +11,8 @@ def GetCondorClient(
     max_workers=None,    # max_workers is synonym for 'maximum'
     memory='2 GB',
     disk='1 GB',
-    requirements=None
+    requirements=None,
+    transfer_input_files=[],
 ):
     '''
     Get a dask.distributed.Client object that can be used for distributed computation with
@@ -23,6 +24,8 @@ def GetCondorClient(
         container_image: (str) Path to the image to be sent to worker nodes. Must be
                     something that HTCondor accepts under the "container_image"
                     classAd.
+        transfer_input_files: (list[str]) A python list of filepaths leading to files to be
+                            sent to workers.
 
     Returns:
         (dask.distributed.Client) A client connected to an HTCondor cluster.
@@ -56,7 +59,7 @@ def GetCondorClient(
          "error": "dask_job_output.$(PROCESS).$(CLUSTER).err",
          "when_to_transfer_output": "ON_EXIT_OR_EVICT",
          "InitialDir": initial_dir,
-         'transfer_input_files':[],
+         'transfer_input_files':transfer_input_files,
      }
     # set up job_script_prologue
     job_script_prologue = ["export XRD_RUNFORKHANDLER=1"]
