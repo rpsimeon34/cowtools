@@ -80,7 +80,7 @@ def GetCondorClient(
         del(job_extra_directives['transfer_input_files'])
     else:
         job_extra_directives['transfer_input_files'] = ','.join(job_extra_directives['transfer_input_files'])
-    if (job_extra_directives['request_GPUs'] is None) or (job_extra_directives['request_GPUs'] < 1):
+    if (job_extra_directives['request_GPUs'] is None) or (int(job_extra_directives['request_GPUs']) < 1):
         # No GPUs were requested
         del(job_extra_directives['request_GPUs'])
 
