@@ -5,7 +5,7 @@ import warnings
 
 DEFAULT_GROUPING_MAP = {
     "QCD": lambda dset: dset.startswith("/QCD"),
-    "ZJets": lambda dset: dset.startswith("/Zto2Q"),
+    "ZJets": lambda dset: dset.startswith("/Zto"),
     "ttbar": lambda dset: dset.startswith("/TTto"),
     "SingleTop": lambda dset: dset.startswith("/TWminus") or dset.startswith("/TbarWplus"),
     "Diboson": lambda dset: dset.startswith("/WWto") or dset.startswith("/ZZto")
