@@ -13,6 +13,7 @@ def GetCondorClient(
     disk='1 GB',
     requirements=None,
     transfer_input_files=[],
+    request_GPUs=None,
 ):
     '''
     Get a dask.distributed.Client object that can be used for distributed computation with
@@ -26,6 +27,8 @@ def GetCondorClient(
                     classAd.
         transfer_input_files: (list[str]) A python list of filepaths leading to files to be
                             sent to workers.
+        request_GPUs: (str | int) The number of GPUs per job to request. If None, no GPUs will
+                    be requested. If an int, will be converted into a string.
 
     Returns:
         (dask.distributed.Client) A client connected to an HTCondor cluster.
@@ -59,7 +62,8 @@ def GetCondorClient(
          "error": "dask_job_output.$(PROCESS).$(CLUSTER).err",
          "when_to_transfer_output": "ON_EXIT_OR_EVICT",
          "InitialDir": initial_dir,
-         'transfer_input_files':transfer_input_files,
+         "transfer_input_files": transfer_input_files,
+         "request_GPUs": request_GPUs,
      }
     # set up job_script_prologue
     job_script_prologue = ["export XRD_RUNFORKHANDLER=1"]
@@ -76,6 +80,9 @@ def GetCondorClient(
         del(job_extra_directives['transfer_input_files'])
     else:
         job_extra_directives['transfer_input_files'] = ','.join(job_extra_directives['transfer_input_files'])
+    if (job_extra_directives['request_GPUs'] is None) or (int(job_extra_directives['request_GPUs']) < 1):
+        # No GPUs were requested
+        del(job_extra_directives['request_GPUs'])
 
     if 'transfer_input_files' in job_extra_directives:
        job_extra_directives['should_transfer_files'] = 'YES'
