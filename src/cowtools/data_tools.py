@@ -66,10 +66,8 @@ def combine_rename_results(in_hists,grouping_map={},short_name_map={}):
 
     return out_dict
 
-def scale_results(mc,lumi,mc_xsecs,mc_evt_cnts,dont_scale=["RawEventCount"]):
+def scale_results(mc,lumi,mc_xsecs,mc_evt_cnts,verbose=False,dont_scale=["RawEventCount"]):
     '''
-    Scale analysis results from MC samples to a certain luminosity.
-
     Inputs:
         mc: (dict) Values are dicts containing hists, floats, etc. to be scaled
         lumi: (float | int) Luminosity to scale to
@@ -92,12 +90,19 @@ def scale_results(mc,lumi,mc_xsecs,mc_evt_cnts,dont_scale=["RawEventCount"]):
         with open(mc,"rb") as f:
             mc = pickle.load(f)
 
+    out = {}
     for dset,results in mc.items():
+        out[dset] = {}
+        mc_factor = mc_xsecs[dset]*lumi/mc_evt_cnts[dset]
+        if verbose:
+            print(f"Dataset {dset} has MC lumi-scaling weight {mc_factor}")
         for obs_name, obs in results.items():
             if obs_name not in dont_scale:
-                obs *= mc_xsecs[dset]*lumi/mc_evt_cnts[dset]
+                out[dset][obs_name] = obs * mc_factor
+            else:
+                out[dset][obs_name] = obs
 
-    return mc
+    return out
 
 class XSecScaler:
     def __init__(self,data,mc,fs_data,fs_mc,grouping_map_mc=DEFAULT_GROUPING_MAP,grouping_map_data={}):
