@@ -8,7 +8,7 @@ DEFAULT_GROUPING_MAP = {
     "ZJets": lambda dset: dset.startswith("/Zto"),
     "ttbar": lambda dset: dset.startswith("/TTto"),
     "SingleTop": lambda dset: dset.startswith("/TWminus") or dset.startswith("/TbarWplus"),
-    "Diboson": lambda dset: dset.startswith("/WWto") or dset.startswith("/ZZto")
+    "Diboson": lambda dset: dset.startswith("/WWto") or dset.startswith("/WZ") or dset.startswith("/ZZto")
 }
 
 def combine_rename_results(in_hists,grouping_map={},short_name_map={}):
@@ -66,6 +66,7 @@ def combine_rename_results(in_hists,grouping_map={},short_name_map={}):
 
     return out_dict
 
+#General, just scale things by luminosity
 def scale_results(mc,lumi,mc_xsecs,mc_evt_cnts,verbose=False,dont_scale=["RawEventCount"]):
     '''
     Inputs:
