@@ -12,6 +12,7 @@ def GetCondorClient(
     memory='2 GB',
     disk='1 GB',
     requirements=None,
+    ship_env=False,
     transfer_input_files=[],
     request_GPUs=None,
 ):
@@ -25,6 +26,8 @@ def GetCondorClient(
         container_image: (str) Path to the image to be sent to worker nodes. Must be
                     something that HTCondor accepts under the "container_image"
                     classAd.
+        ship_env: (bool) If True, run jobs on workers in the same python virtual environment
+                    as the one in which the scheduler operates.
         transfer_input_files: (list[str]) A python list of filepaths leading to files to be
                             sent to workers.
         request_GPUs: (str | int) The number of GPUs per job to request. If None, no GPUs will
@@ -75,6 +78,9 @@ def GetCondorClient(
     if x509_path is not None:
         job_extra_directives['transfer_input_files'].append(x509_path)
         job_script_prologue.append(f"export X509_USER_PROXY={os.path.basename(x509_path)}")
+    if ship_env:
+        env_to_transfer = _find_env()
+        job_script_prologue.append(env_to_transfer)
     if job_extra_directives['transfer_input_files'] == []:
         # no files are set to be transferred
         del(job_extra_directives['transfer_input_files'])
@@ -104,6 +110,11 @@ def GetCondorClient(
     print('Condor logs, output files, error files in {}'.format(initial_dir))
     cluster.adapt(minimum=1, maximum=maximum)
     return Client(cluster)
+
+def _find_env():
+    #Find the virtual environment and list it as a directory to be transferred
+    env_path = os.getenv("VIRTUAL_ENV", Path.home() / Path(".env"))
+    return str(env_path)
 
 def _find_image():
     custom_sif = Path(f"/scratch/{os.environ['USER']}/notebook.sif")
