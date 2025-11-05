@@ -87,8 +87,6 @@ def GetCondorClient(
         env_pkgs_sched, env_pkgs_worker = _find_env_packages()
         job_extra_directives['transfer_input_files'].extend(env_pkgs_sched)
         new_path_parts = ':'.join(env_pkgs_worker)
-        print("Transfer input files:")
-        print(job_extra_directives['transfer_input_files'])
         job_script_prologue.append(f"export PYTHONPATH=$PYTHONPATH:{new_path_parts}")
         other_htc_kwargs['python'] = '/usr/local/bin/python3' #DELETE THIS FIXME
         #other_htc_kwargs['python'] = f"{initial_dir}/{os.path.basename(_find_env())}/bin/python3"
