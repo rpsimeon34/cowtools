@@ -1,6 +1,9 @@
 import yaml
 import os
 from pathlib import Path
+import shutil
+import sys
+import tempfile
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client
 
@@ -70,6 +73,8 @@ def GetCondorClient(
      }
     # set up job_script_prologue
     job_script_prologue = ["export XRD_RUNFORKHANDLER=1"]
+    # set up other kwargs for initializing the HTCondorCluster
+    other_htc_kwargs = {}
     # create transfer_input_files list:
     if os.path.isfile(container_image) and 'cvmfs' not in container_image:
         # this is a local file not in CVMFS or docker and needs to be
@@ -79,8 +84,17 @@ def GetCondorClient(
         job_extra_directives['transfer_input_files'].append(x509_path)
         job_script_prologue.append(f"export X509_USER_PROXY={os.path.basename(x509_path)}")
     if ship_env:
-        env_to_transfer = _find_env()
-        job_script_prologue.append(env_to_transfer)
+        env_pkgs_sched, env_pkgs_worker = _find_env_packages()
+        job_extra_directives['transfer_input_files'].extend(env_pkgs_sched)
+        new_path_parts = ':'.join(env_pkgs_worker)
+        print("Transfer input files:")
+        print(job_extra_directives['transfer_input_files'])
+        job_script_prologue.append(f"export PYTHONPATH=$PYTHONPATH:{new_path_parts}")
+        other_htc_kwargs['python'] = '/usr/local/bin/python3' #DELETE THIS FIXME
+        #other_htc_kwargs['python'] = f"{initial_dir}/{os.path.basename(_find_env())}/bin/python3"
+    #If not shipping env, but python process is running with a venv python, switch pythons
+    elif Path(_find_env()) in Path(sys.executable).parents:
+        other_htc_kwargs['python'] = '/usr/local/bin/python3'
     if job_extra_directives['transfer_input_files'] == []:
         # no files are set to be transferred
         del(job_extra_directives['transfer_input_files'])
@@ -105,6 +119,7 @@ def GetCondorClient(
         death_timeout = '60',
         job_extra_directives=job_extra_directives,
         job_script_prologue=job_script_prologue,
+        **other_htc_kwargs
     )
     print(f"dask workers will run in {container_image}")
     print('Condor logs, output files, error files in {}'.format(initial_dir))
@@ -113,8 +128,21 @@ def GetCondorClient(
 
 def _find_env():
     #Find the virtual environment and list it as a directory to be transferred
-    env_path = os.getenv("VIRTUAL_ENV", Path.home() / Path(".env"))
+    env_path = os.getenv("VIRTUAL_ENV", Path.home() / Path(".af-env"))
     return str(env_path)
+
+def _find_env_packages():
+    #Find the virtual environment and list it as a directory to be transferred
+    env_path = Path(os.getenv("VIRTUAL_ENV", Path.home() / Path(".af-env")))
+    pkgs_sched = []
+    pkgs_worker = []
+    for p in sys.path:
+        pkg_path = Path(p)
+        if env_path in pkg_path.parents:
+            pkgs_sched.append(p)
+            out_path = pkg_path.relative_to(env_path.parent)
+            pkgs_worker.append(os.path.basename(str(out_path)))
+    return pkgs_sched, pkgs_worker
 
 def _find_image():
     custom_sif = Path(f"/scratch/{os.environ['USER']}/notebook.sif")
