@@ -126,19 +126,21 @@ def GetCondorClient(
 
 def _find_env():
     #Find the virtual environment and list it as a directory to be transferred
-    env_path = os.getenv("VIRTUAL_ENV", Path.home() / Path(".af-env"))
+    env_path = str(Path(os.getenv("VIRTUAL_ENV", Path.home() / Path(".af-env"))).resolve()) #resolve symlinks
+    if not Path(env_path).is_dir():
+        raise FileNotFoundError(f"Looking for virtual environment at {env_path}, but none found")
     return str(env_path)
 
 def _find_env_packages():
     #Find the virtual environment and list it as a directory to be transferred
-    env_path = Path(os.getenv("VIRTUAL_ENV", Path.home() / Path(".af-env")))
+    env_path = Path(_find_env())
     pkgs_sched = []
     pkgs_worker = []
     for p in sys.path:
-        pkg_path = Path(p)
+        pkg_path = Path(p).resolve()
         if env_path in pkg_path.parents:
             pkgs_sched.append(p)
-            out_path = pkg_path.relative_to(env_path.parent)
+            out_path = pkg_path.relative_to(env_path.parent).resolve() #resolve symlinks
             pkgs_worker.append(os.path.basename(str(out_path)))
     return pkgs_sched, pkgs_worker
 
