@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "cowtools"
 description = "Convenience tools for physics analyses with the University of Wisconsin-Madison Analysis Facility"
 readme = "README.md"
-version = "0.1"
+version = "1.0"
 requires-python = ">=3.6.8"
 authors = [
     { name = "Ryan Simeon", email = "rsimeon@wisc.edu" }
@@ -27,7 +27,8 @@ test = [
 
 dev = [
     "pytest",
-    "pre-commit"
+    "pre-commit",
+    "nox"
 ]
 
 [tool.ruff]
