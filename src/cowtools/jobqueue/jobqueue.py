@@ -88,7 +88,7 @@ def GetCondorClient(
         job_extra_directives['transfer_input_files'].extend(env_pkgs_sched)
         new_path_parts = ':'.join(env_pkgs_worker)
         job_script_prologue.append(f"export PYTHONPATH=$PYTHONPATH:{new_path_parts}")
-        other_htc_kwargs['python'] = '/usr/local/bin/python3' #DELETE THIS FIXME
+        other_htc_kwargs['python'] = '/usr/local/bin/python3'
         #other_htc_kwargs['python'] = f"{initial_dir}/{os.path.basename(_find_env())}/bin/python3"
     #If not shipping env, but python process is running with a venv python, switch pythons
     elif Path(_find_env()) in Path(sys.executable).parents:
