@@ -89,8 +89,9 @@ def GetCondorClient(
         new_path_parts = ':'.join(env_pkgs_worker)
         job_script_prologue.append(f"export PYTHONPATH=$PYTHONPATH:{new_path_parts}")
         other_htc_kwargs['python'] = '/usr/local/bin/python3'
-        #other_htc_kwargs['python'] = f"{initial_dir}/{os.path.basename(_find_env())}/bin/python3"
     #If not shipping env, but python process is running with a venv python, switch pythons
+    elif _find_env() is None:
+        pass #Do nothing
     elif Path(_find_env()) in Path(sys.executable).parents:
         other_htc_kwargs['python'] = '/usr/local/bin/python3'
     if job_extra_directives['transfer_input_files'] == []:
@@ -126,14 +127,19 @@ def GetCondorClient(
 
 def _find_env():
     #Find the virtual environment and list it as a directory to be transferred
-    env_path = str(Path(os.getenv("VIRTUAL_ENV", Path.home() / Path(".af-env"))).resolve()) #resolve symlinks
-    if not Path(env_path).is_dir():
-        raise FileNotFoundError(f"Looking for virtual environment at {env_path}, but none found")
-    return str(env_path)
+    env_path = os.getenv("VIRTUAL_ENV", None)
+    return env_path
 
 def _find_env_packages():
     #Find the virtual environment and list it as a directory to be transferred
-    env_path = Path(_find_env())
+    try:
+        env_path = Path(_find_env())
+    except TypeError as e:
+        env_path = _find_env()
+        if env_path is None:
+            raise FileNotFoundError(f"Looking for virtual environment at {env_path}, but none found")
+        else:
+            raise e
     pkgs_sched = []
     pkgs_worker = []
     for p in sys.path:
