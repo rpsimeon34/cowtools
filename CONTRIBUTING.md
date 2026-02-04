@@ -9,3 +9,6 @@ From there, one can `python3 -m pip install .[dev]` and `python3 -m nox -s tests
 It is in principle possible to set up automated testing (CI/CD) via Github workflows in a way that
 interacts nicely with the Condor requests in `cowtools`. If you are interested in adding this feature,
 please fork the repo and create a pull request when you are ready.
+
+If you make changes to `cowtools.plotting`, you may need to generate new baseline images for the tests. This can be done by installing the package with development optional dependencies
+(`python3 -m pip install .[dev]`) and running `pytest --mpl-generate-path=tests/baseline`.
