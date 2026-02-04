@@ -145,14 +145,14 @@ def _find_env_packages():
     # Find the virtual environment and list it as a directory to be transferred
     try:
         env_path = Path(_find_env())
-    except TypeError as e:
+    except TypeError as exc:
         env_path = _find_env()
         if env_path is None:
             raise FileNotFoundError(
                 f"Looking for virtual environment at {env_path}, but none found"
-            )
+            ) from exc
         else:
-            raise e
+            raise exc
     pkgs_sched = []
     pkgs_worker = []
     for p in sys.path:
@@ -181,10 +181,10 @@ def _find_image():
             print_debug(container_info)
         try:
             container_source = container_info["container_source"]
-        except KeyError:
+        except KeyError as exc:
             raise Exception(
                 f"{container_info_file} is missing expected key 'container_source'"
-            )
+            ) from exc
 
         print_debug(container_source)
         # assume container_source is a valid container_image value

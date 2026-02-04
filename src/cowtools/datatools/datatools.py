@@ -52,7 +52,8 @@ def combine_rename_results(in_hists, grouping_map=None, short_name_map=None):
             to create datasets in the output dict with the following names:
             {_names_in_both}. This may lead to some results overwriting others. This is
             only safe if every dset pointing to a shared group name in short_name_map
-            passes a function in grouping_map. Proceed with caution!"""
+            passes a function in grouping_map. Proceed with caution!""",
+            stacklevel=1,
         )
 
     # Initialize output hist
@@ -71,12 +72,12 @@ def combine_rename_results(in_hists, grouping_map=None, short_name_map=None):
                 for obs_name, obs in results.items():
                     try:
                         out_dict[group_name][obs_name] += obs
-                    except KeyError:
+                    except KeyError as exc:
                         raise ValueError(
                             """Two result histograms cannot be grouped together due to
                             different structures. Please make sure that all values in
                             in_hists have the same set of keys."""
-                        )
+                        ) from exc
             # Do not check other group_names, since we already accumulated the results
             is_in_group = True
             break
@@ -108,14 +109,15 @@ def scale_results(mc, lumi, mc_xsecs, mc_evt_cnts, verbose=False, dont_scale=Non
     # If mc is a string, treat as filepath and retrieve results
     if dont_scale is None:
         dont_scale = ["RawEventCount"]
-    if type(mc) == str:
+    if isinstance(mc, str):
         # If strings end in .pkl, use pickle to load
         if not mc.endswith(".pkl"):
             warnings.warn(
                 f"""
                 Warning: arg mc is {mc}, and is type str, but does not end in '.pkl'.
                 Trying to read with pickle anyway. If this is not desired, please
-                retrieve the hist of results and pass that as mc arg."""
+                retrieve the hist of results and pass that as mc arg.""",
+                stacklevel=1,
             )
         with open(mc, "rb") as f:
             mc = pickle.load(f)
@@ -190,21 +192,21 @@ class XSecScaler:
         # Load filesets, if they are strings (assuming they are paths to jsons)
         if grouping_map_data is None:
             grouping_map_data = {}
-        if type(fs_data) == str:
+        if isinstance(fs_data, str):
             with gzip.open(fs_data, "rt") as f:
                 fs_data = json.load(f)
         self.fs_data = fs_data
-        if type(fs_mc) == str:
+        if isinstance(fs_mc, str):
             with gzip.open(fs_mc, "rt") as f:
                 fs_mc = json.load(f)
         self.fs_mc = fs_mc
 
         # Load results, if it is a string (assuming it is a path to a pkl)
-        if type(data) == str:
+        if isinstance(data, str):
             with open(data, "rb") as f:
                 data = pickle.load(f)
         self.data = data
-        if type(mc) == str:
+        if isinstance(mc, str):
             with open(mc, "rb") as f:
                 mc = pickle.load(f)
         self.mc = mc

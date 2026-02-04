@@ -11,5 +11,5 @@ def test_GetCondorClient():
         container_image="docker://docker.io/coffeateam/coffea-dask-almalinux9:2025.12.0-py3.12"
     )
     with client:
-        assert type(client.ncores()) == dict
+        assert isinstance(client.ncores(), dict)
         client.shutdown()
