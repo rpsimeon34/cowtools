@@ -84,9 +84,7 @@ def combine_rename_results(in_hists, grouping_map=None, short_name_map=None):
 
 
 # General, just scale things by luminosity
-def scale_results(
-    mc, lumi, mc_xsecs, mc_evt_cnts, verbose=False, dont_scale=None
-):
+def scale_results(mc, lumi, mc_xsecs, mc_evt_cnts, verbose=False, dont_scale=None):
     """
     Inputs:
         mc: (dict) Values are dicts containing hists, floats, etc. to be scaled
