@@ -1,16 +1,27 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from cycler import cycler
-from hist import Hist
 import hist.intervals
 import hist.plot
+import matplotlib.pyplot as plt
 import mplhep as hep
+import numpy as np
+from cycler import cycler
 
-TABLEAU_COLORS = ['blue','orange','green','red','purple','brown','pink','gray','olive','cyan']
+TABLEAU_COLORS = [
+    "blue",
+    "orange",
+    "green",
+    "red",
+    "purple",
+    "brown",
+    "pink",
+    "gray",
+    "olive",
+    "cyan",
+]
 
 hep.style.use(hep.style.CMS)
 
-def plot_1d(*args,**kwargs):
+
+def plot_1d(*args, **kwargs):
     """
     See plot_1d_ax. Creats only one plot, and displays it to screen.
 
@@ -21,15 +32,33 @@ def plot_1d(*args,**kwargs):
     **kwargs:
         Keyword arguments to pass to plot_1d_ax
     """
-    fig,ax = plt.subplots(1,1,figsize=(7,4.7))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 4.7))
 
-    ax = plot_1d_ax(ax,*args,**kwargs)
+    ax = plot_1d_ax(ax, *args, **kwargs)
 
     plt.show()
 
-def plot_1d_ax(ax,title,bkg_hists=None,bkg_label=None,sgl_hists=None,sgl_label=None,
-            xlabel=None,xlim=None,signal_sf=1,logy=False,density=False,sort="yield",
-            title_pos=None,year=None,lumi=None,com=13.6,legend_xoffset=0.02,flow="hint"):
+
+def plot_1d_ax(
+    ax,
+    title,
+    bkg_hists=None,
+    bkg_label=None,
+    sgl_hists=None,
+    sgl_label=None,
+    xlabel=None,
+    xlim=None,
+    signal_sf=1,
+    logy=False,
+    density=False,
+    sort="yield",
+    title_pos=None,
+    year=None,
+    lumi=None,
+    com=13.6,
+    legend_xoffset=0.02,
+    flow="hint",
+):
     """
     Make a 1D histogram plot with stacked backgrounds and signals as lines.
     Shows plots as "CMS Preliminary", puts a legend in the top right, and calls
@@ -79,44 +108,70 @@ def plot_1d_ax(ax,title,bkg_hists=None,bkg_label=None,sgl_hists=None,sgl_label=N
     flow: str
         How to show under/overflow bins. Passed to mplhep.histplot
     """
-    
+
     if bkg_hists:
-        hep.histplot(bkg_hists,ax=ax,stack=True,histtype='fill',label=bkg_label,density=density,sort=sort,flow=flow)
+        hep.histplot(
+            bkg_hists,
+            ax=ax,
+            stack=True,
+            histtype="fill",
+            label=bkg_label,
+            density=density,
+            sort=sort,
+            flow=flow,
+        )
     if sgl_hists:
         if signal_sf != 1:
-            scaled_sgl_hists = [signal_sf*hist for hist in sgl_hists]
-            scaled_sgl_label = [label+f' (x{signal_sf})' for label in sgl_label]
-            hep.histplot(scaled_sgl_hists,ax=ax,label=scaled_sgl_label,density=density,sort=sort,flow=flow)
+            scaled_sgl_hists = [signal_sf * hist for hist in sgl_hists]
+            scaled_sgl_label = [label + f" (x{signal_sf})" for label in sgl_label]
+            hep.histplot(
+                scaled_sgl_hists,
+                ax=ax,
+                label=scaled_sgl_label,
+                density=density,
+                sort=sort,
+                flow=flow,
+            )
         else:
-            hep.histplot(sgl_hists,ax=ax,label=sgl_label,density=density,sort=sort,flow=flow)
+            hep.histplot(
+                sgl_hists, ax=ax, label=sgl_label, density=density, sort=sort, flow=flow
+            )
 
     if lumi or year:
-        hep.cms.label(lumi=lumi,year=year,loc=1,fontsize=14,lumi_format='{:.1f}',com=com)
+        hep.cms.label(
+            lumi=lumi, year=year, loc=1, fontsize=14, lumi_format="{:.1f}", com=com
+        )
     if (lumi or year) and not title_pos:
-        ax.set_title(title,y=1.07,pad=2)
+        ax.set_title(title, y=1.07, pad=2)
     else:
-        ax.set_title(title,y=title_pos,pad=2)
-    ax.legend(fontsize=10, loc='upper right', bbox_to_anchor=(1.0+legend_xoffset,0.999)).shadow=True
+        ax.set_title(title, y=title_pos, pad=2)
+    ax.legend(
+        fontsize=10, loc="upper right", bbox_to_anchor=(1.0 + legend_xoffset, 0.999)
+    ).shadow = True
     if density:
-        ax.set_ylabel('A.U.',fontsize=10)
+        ax.set_ylabel("A.U.", fontsize=10)
     else:
-        ax.set_ylabel('Events',fontsize=10)
-    ax.set_xlabel(xlabel,fontsize=10,labelpad=2)
+        ax.set_ylabel("Events", fontsize=10)
+    ax.set_xlabel(xlabel, fontsize=10, labelpad=2)
     if xlim:
-        ax.set_xlim(xlim[0],xlim[1])
+        ax.set_xlim(xlim[0], xlim[1])
     else:
         if ax.get_xlim()[0] < 0:
-            ax.set_xlim(abs(ax.get_xlim()[0])*-1.2,abs(ax.get_xlim()[1])*0.2 + ax.get_xlim()[1])
+            ax.set_xlim(
+                abs(ax.get_xlim()[0]) * -1.2,
+                abs(ax.get_xlim()[1]) * 0.2 + ax.get_xlim()[1],
+            )
         else:
-            ax.set_xlim(0,ax.get_xlim()[1]*1.2)
+            ax.set_xlim(0, ax.get_xlim()[1] * 1.2)
     if logy:
         ax.semilogy()
     return ax
 
-def plot_1d_tofile(outfile,*args,**kwargs):
+
+def plot_1d_tofile(outfile, *args, **kwargs):
     """
     Same as plot_1d, except saves the plot to a file.
-    
+
     Inputs
     ------
     *args:
@@ -124,17 +179,35 @@ def plot_1d_tofile(outfile,*args,**kwargs):
     **kwargs:
         Keyword arguments to pass to plot_1d_ax
     """
-    fig,ax = plt.subplots(1,1,figsize=(7,4.7))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 4.7))
 
-    ax = plot_1d_ax(ax,*args,**kwargs)
+    ax = plot_1d_ax(ax, *args, **kwargs)
 
-    plt.savefig(outfile,bbox_inches='tight')
-    print(f'Saved output to {outfile}')
+    plt.savefig(outfile, bbox_inches="tight")
+    print(f"Saved output to {outfile}")
     plt.close()
 
-def plot_1d_sgl_stack_ax(ax,title,outfile,bkg_hists,bkg_label,sgl_hists,sgl_label,\
-            xlabel=None,xlim=None,logy=False,density=False,legend_xoffset=0.02):
-    '''
+
+def plot_1d_sgl_stack_ax(
+    ax,
+    title,
+    sgl_hists,
+    sgl_label,
+    bkg_hists,
+    bkg_label,
+    xlabel=None,
+    xlim=None,
+    logy=False,
+    density=False,
+    sort="yield",
+    title_pos=None,
+    year=None,
+    lumi=None,
+    com=13.6,
+    legend_xoffset=0.02,
+    flow="hint",
+):
+    """
     Make a 1D histogram plot with signals stacked on top of (also stacked) backgrounds.
     Shows the background histograms as filled, and the signal ones and transparent.
     Shows plots as "CMS Preliminary", puts a legend in the top right, and calls
@@ -146,8 +219,12 @@ def plot_1d_sgl_stack_ax(ax,title,outfile,bkg_hists,bkg_label,sgl_hists,sgl_labe
         The axis to put this plot on
     title: str
         The title of the plot.
-    outfile: str
-        Where to save the plot, and what to call the file.
+    sgl_hists: iterable
+        Like bkg_hists, but will be overlayed as lines,
+        instead of stacked. At most 10 total (background+signal) histograms
+        can be plotted.
+    sgl_label: iterable
+        Like bkg_label, but with the same length as sgl_hists.
     bkg_hists: iterable
         An iterable of single-axis histograms to be stacked
         in the plot. May need to sum/integrate over all but one axis
@@ -157,54 +234,85 @@ def plot_1d_sgl_stack_ax(ax,title,outfile,bkg_hists,bkg_label,sgl_hists,sgl_labe
         Iterable of strings of the same length as bkg_hists.
         This goes in the legend. The first label goes with the first
         histogram in bkg_hists, etc.
-    sgl_hists: iterable
-        Like bkg_hists, but will be overlayed as lines,
-        instead of stacked. At most 10 total (background+signal) histograms
-        can be plotted.
-    sgl_label: iterable
-        Like bkg_label, but with the same length as sgl_hists.
     xlabel: str
         The label for the x-axis. If not given, no label put on plot.
     xlim: iterable of length 2
-        Zeroth argument is lower x-axis limit, last argument is upper
-        x-axis limit.
+        Zeroth argument is lower x-axis limit, last argument is upper x-axis limit.
     logy: bool
         If True, makes y-axis log-scaled
     density: bool
         If True, make all histograms plotted normed so their integrals
         are equal to 1.
-    legend_xoffset: float
-        The offset applied to the legend along the x-axis
-    '''
-    #Get the colors for the plot
-    if len(bkg_hists)+len(sgl_hists) > len(TABLEAU_COLORS):
-        raise ValueError('In plot_1d, at most 10 total (background+signal)'+\
-                         f'histograms can be plotted at once. Tried to plot {len(bkg_hists)}'+\
-                         f'background and {len(sgl_hists)} signal histograms')
-    fill_colors = TABLEAU_COLORS[:len(bkg_hists)]+['none']*len(sgl_hists)
-    edge_colors = TABLEAU_COLORS[:len(bkg_hists)+len(sgl_hists)]
-    print('fill colors are: {}'.format(fill_colors))
-    print('edge colors are: {}'.format(edge_colors))
+    sort: str | None, optional
+        The sort kwarg to be passed to mplhep's histplot function. If no
+        sorting is desired, pass None.
+    title_pos: float
+        If set, sets the height of the title in matplotlib coordinates (1.0 is top),
+    year: str | int
+        If set, labels the plot with a year
+    lumi: str | int
+        If set, labels the plot with a luminosity
+    com: float
+        The center-of-mass energy to label the plot with, in TeV. Defaults to 13.6 TeV.
+    flow: str
+        How to show under/overflow bins. Passed to mplhep.histplot
+    """
+    # Get the colors for the plot
+    if len(bkg_hists) + len(sgl_hists) > len(TABLEAU_COLORS):
+        raise ValueError(
+            "In plot_1d, at most 10 total (background+signal)"
+            + f"histograms can be plotted at once. Tried to plot {len(bkg_hists)}"
+            + f"background and {len(sgl_hists)} signal histograms"
+        )
+    fill_colors = TABLEAU_COLORS[: len(bkg_hists)] + ["none"] * len(sgl_hists)
+    edge_colors = TABLEAU_COLORS[: len(bkg_hists) + len(sgl_hists)]
+    print(f"fill colors are: {fill_colors}")
+    print(f"edge colors are: {edge_colors}")
 
-    hep.histplot(bkg_hists+sgl_hists,ax=ax,stack=True,histtype='fill',\
-                 label=bkg_label+sgl_label,facecolor=fill_colors,edgecolor=edge_colors,\
-                 linewidth=1,density=density)
+    hep.histplot(
+        bkg_hists + sgl_hists,
+        ax=ax,
+        stack=True,
+        histtype="fill",
+        label=bkg_label + sgl_label,
+        facecolor=fill_colors,
+        edgecolor=edge_colors,
+        linewidth=1,
+        density=density,
+    )
 
-    hep.cms.text("Preliminary",loc=1,fontsize=14)
-    ax.set_title(title,y=1.0,pad=2)
-    ax.legend(fontsize=10, loc='upper right', bbox_to_anchor=(1.0+legend_xoffset,0.999)).shadow=True
-    ax.set_ylabel('Events',fontsize=10)
-    ax.set_xlabel(xlabel,fontsize=10,labelpad=2)
-    if xlim:
-        ax.set_xlim(xlim[0],xlim[1])
+    if lumi or year:
+        hep.cms.label(
+            lumi=lumi, year=year, loc=1, fontsize=14, lumi_format="{:.1f}", com=com
+        )
+    if (lumi or year) and not title_pos:
+        ax.set_title(title, y=1.07, pad=2)
     else:
-        ax.set_xlim(0,ax.get_xlim()[1]*1.2)
+        ax.set_title(title, y=title_pos, pad=2)
+    ax.legend(
+        fontsize=10, loc="upper right", bbox_to_anchor=(1.0 + legend_xoffset, 0.999)
+    ).shadow = True
+    if density:
+        ax.set_ylabel("A.U.", fontsize=10)
+    else:
+        ax.set_ylabel("Events", fontsize=10)
+    ax.set_xlabel(xlabel, fontsize=10, labelpad=2)
+    if xlim:
+        ax.set_xlim(xlim[0], xlim[1])
+    else:
+        if ax.get_xlim()[0] < 0:
+            ax.set_xlim(
+                abs(ax.get_xlim()[0]) * -1.2,
+                abs(ax.get_xlim()[1]) * 0.2 + ax.get_xlim()[1],
+            )
+        else:
+            ax.set_xlim(0, ax.get_xlim()[1] * 1.2)
     if logy:
         ax.semilogy()
-
     return ax
 
-def plot_1d_sgl_stack(*args,**kwargs):
+
+def plot_1d_sgl_stack(*args, **kwargs):
     """
     See plot_1d_sgl_stack_ax. Shows plot to screen
 
@@ -215,13 +323,14 @@ def plot_1d_sgl_stack(*args,**kwargs):
     **kwargs:
         kwargs to pass to plot_1d_sgl_stack_ax
     """
-    fig,ax = plt.subplots(1,1,figsize=(7,4.7))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 4.7))
 
-    ax = plot_1d_sgl_stack_ax(ax,*args,**kwargs)
+    ax = plot_1d_sgl_stack_ax(ax, *args, **kwargs)
 
     plt.show()
 
-def plot_1d_sgl_stack_tofile(outfile,*args,**kwargs):
+
+def plot_1d_sgl_stack_tofile(outfile, *args, **kwargs):
     """
     See plot_1d_sgl_stack. Saves plot to file
 
@@ -232,16 +341,35 @@ def plot_1d_sgl_stack_tofile(outfile,*args,**kwargs):
     **kwargs:
         Keyword arguments to pass to plot_1d_ax
     """
-    fig,ax = plt.subplots(1,1,figsize=(7,4.7))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 4.7))
 
-    ax = plot_1d_sgl_stack_ax(ax,*args,**kwargs)
+    ax = plot_1d_sgl_stack_ax(ax, *args, **kwargs)
 
-    plt.savefig(outfile,bbox_inches='tight')
-    print("Saved output to {}".format(outfile))
+    plt.savefig(outfile, bbox_inches="tight")
+    print(f"Saved output to {outfile}")
 
-def plot_2d_ax(ax,hist2d,title=None,xlabel=None,xlim=None,logx=False,ylabel=None,ylim=None,\
-            logy=False,xbar_low=None,xbar_high=None,ybar_low=None,ybar_high=None,title_pos=None,\
-            year=None,lumi=None,com=13.6,norm=None,flow="hint"):
+
+def plot_2d_ax(
+    ax,
+    hist2d,
+    title=None,
+    xlabel=None,
+    xlim=None,
+    logx=False,
+    ylabel=None,
+    ylim=None,
+    logy=False,
+    xbar_low=None,
+    xbar_high=None,
+    ybar_low=None,
+    ybar_high=None,
+    title_pos=None,
+    year=None,
+    lumi=None,
+    com=13.6,
+    norm=None,
+    flow="hint",
+):
     """
     Plot a 2D histogram with various customizations, including writing "CMS Preliminary", writing
     the COM energy, potentially the luminosity, year, and title.
@@ -285,34 +413,41 @@ def plot_2d_ax(ax,hist2d,title=None,xlabel=None,xlim=None,logx=False,ylabel=None
     flow: bool | str, default "hint"
         If True, show underflow and overflow bins
     """
-    hep.hist2dplot(hist2d,ax=ax,norm=norm,flow=flow)
+    hep.hist2dplot(hist2d, ax=ax, norm=norm, flow=flow)
     if lumi or year:
-        hep.cms.label(lumi=lumi,year=year,loc=1,fontsize=14,lumi_format='{:.1f}',com=com)
+        hep.cms.label(
+            lumi=lumi, year=year, loc=1, fontsize=14, lumi_format="{:.1f}", com=com
+        )
     if (lumi or year) and not title_pos:
-        ax.set_title(title,y=1.07,pad=2)
+        ax.set_title(title, y=1.07, pad=2)
     else:
-        ax.set_title(title,y=title_pos,pad=2)
-    ax.set_ylabel(ylabel,fontsize=10)
-    ax.set_xlabel(xlabel,fontsize=10,labelpad=2)
+        ax.set_title(title, y=title_pos, pad=2)
+    ax.set_ylabel(ylabel, fontsize=10)
+    ax.set_xlabel(xlabel, fontsize=10, labelpad=2)
     if xlim:
-        ax.set_xlim(xlim[0],xlim[1])
+        ax.set_xlim(xlim[0], xlim[1])
     if logx:
         ax.semilogx()
     if ylim:
-        ax.set_ylim(ylim[0],ylim[1])
+        ax.set_ylim(ylim[0], ylim[1])
     if logy:
         ax.semilogy()
     if xbar_low:
-        ax.plot((xbar_low,xbar_low),(ax.get_ylim()[0],ax.get_ylim()[1]),color='red')
+        ax.plot((xbar_low, xbar_low), (ax.get_ylim()[0], ax.get_ylim()[1]), color="red")
     if xbar_high:
-        ax.plot((xbar_high,xbar_high),(ax.get_ylim()[0],ax.get_ylim()[1]),color='red')
+        ax.plot(
+            (xbar_high, xbar_high), (ax.get_ylim()[0], ax.get_ylim()[1]), color="red"
+        )
     if ybar_low:
-        ax.plot((ax.get_xlim()[0],ax.get_xlim()[1]),(ybar_low,ybar_low),color='red')
+        ax.plot((ax.get_xlim()[0], ax.get_xlim()[1]), (ybar_low, ybar_low), color="red")
     if ybar_high:
-        ax.plot((ax.get_xlim()[0],ax.get_xlim()[1]),(ybar_high,ybar_high),color='red')
+        ax.plot(
+            (ax.get_xlim()[0], ax.get_xlim()[1]), (ybar_high, ybar_high), color="red"
+        )
     return ax
 
-def plot_2d(*args,**kwargs):
+
+def plot_2d(*args, **kwargs):
     """
     See plot_2d_ax. Shows plot to screen
 
@@ -323,13 +458,14 @@ def plot_2d(*args,**kwargs):
     **kwargs:
         kwargs to pass to plot_2d_ax
     """
-    fig,ax = plt.subplots(1,1,figsize=(7,4.7))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 4.7))
 
-    plot_2d_ax(ax,*args,**kwargs)
+    plot_2d_ax(ax, *args, **kwargs)
 
     plt.show()
 
-def plot_2d_tofile(outfile,*args,**kwargs):
+
+def plot_2d_tofile(outfile, *args, **kwargs):
     """
     See plot_2d_ax. Saves plot to file
 
@@ -340,20 +476,37 @@ def plot_2d_tofile(outfile,*args,**kwargs):
     **kwargs:
         kwargs to pass to plot_2d_ax
     """
-    fig,ax = plt.subplots(1,1,figsize=(7,4.7))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 4.7))
 
-    ax = plot_2d_ax(ax,*args,**kwargs)
+    ax = plot_2d_ax(ax, *args, **kwargs)
 
-    plt.savefig(outfile,bbox_inches='tight')
-    print("Saved output to {}".format(outfile))
+    plt.savefig(outfile, bbox_inches="tight")
+    print(f"Saved output to {outfile}")
 
-def plot_wRatio(hMCs,hData,MC_labels,title,sgl_hists=None,sgl_label=None,signal_sf=1,lumi = 100.0,year = 2023,
-                com = 13.6,title_pos = 1.07,legend_xoffset = 0.02,xlabel = None,xlim = None,logy = False,outfile=None):
-    '''
+
+def plot_wRatio(
+    hMCs,
+    hData,
+    MC_labels,
+    title,
+    sgl_hists=None,
+    sgl_label=None,
+    signal_sf=1,
+    lumi=100.0,
+    year=2023,
+    com=13.6,
+    title_pos=1.07,
+    legend_xoffset=0.02,
+    xlabel=None,
+    xlim=None,
+    logy=False,
+    outfile=None,
+):
+    """
     Plot histograms as in plot_1d_ax, but also with data overlayed as scatter points. Also show a second pane underneath
     with the data/MC-ratio. Includes statistical uncertainties on both MC and data. Optionally also plots the signal MC
     distribution overlayed on the top pane as a step-type (unfilled bar) histogram.
-    
+
     Note that hMCs have to use hist.storage.Weight() as storage, otherwise
     we cannot add them together and get variances.
 
@@ -395,97 +548,123 @@ def plot_wRatio(hMCs,hData,MC_labels,title,sgl_hists=None,sgl_label=None,signal_
         If True, show the y-axis on a log scale
     outfile: str, optional
         If given, saves the plot to a file. Otherwise, displays to screen
-    '''
-    #If more than 6 things plotted, use 10-color palette
+    """
+    # If more than 6 things plotted, use 10-color palette
     if len(hMCs) > 6:
-        colors = ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"]
+        colors = [
+            "#3f90da",
+            "#ffa90e",
+            "#bd1f01",
+            "#94a4a2",
+            "#832db6",
+            "#a96b59",
+            "#e76300",
+            "#b9ac70",
+            "#717581",
+            "#92dadd",
+        ]
         hep.styles.CMS["axes.prop_cycle"] = cycler("color", colors)
         hep.style.use(hep.style.CMS)
-    
+
     fig, (ax, rax) = plt.subplots(
         2, 1, figsize=(7, 7), gridspec_kw={"height_ratios": (3, 1)}, sharex=True
     )
     fig.subplots_adjust(hspace=0.07)
-    
-    hep.histplot(hMCs,ax=ax,stack=True,histtype='fill',label=MC_labels,sort="yield")
+
+    hep.histplot(
+        hMCs, ax=ax, stack=True, histtype="fill", label=MC_labels, sort="yield"
+    )
     if sgl_hists:
         if signal_sf != 1:
-            scaled_sgl_hists = [signal_sf*hist for hist in sgl_hists]
-            scaled_sgl_label = [label+f' (x{signal_sf})' for label in sgl_label]
-            hep.histplot(scaled_sgl_hists,ax=ax,label=scaled_sgl_label,sort="yield")
+            scaled_sgl_hists = [signal_sf * hist for hist in sgl_hists]
+            scaled_sgl_label = [label + f" (x{signal_sf})" for label in sgl_label]
+            hep.histplot(scaled_sgl_hists, ax=ax, label=scaled_sgl_label, sort="yield")
         else:
-            hep.histplot(sgl_hists,ax=ax,label=sgl_label,sort="yield")
+            hep.histplot(sgl_hists, ax=ax, label=sgl_label, sort="yield")
     ax.set_xlabel(None)
-    
+
     mc_sum = sum(hMCs)
-    
-    mcStatUp = np.append(mc_sum.values() + np.sqrt(mc_sum.variances()),[0])
-    mcStatDo = np.append(mc_sum.values() - np.sqrt(mc_sum.variances()),[0])
-    
-    uncertainty_band = ax.fill_between(
+
+    mcStatUp = np.append(mc_sum.values() + np.sqrt(mc_sum.variances()), [0])
+    mcStatDo = np.append(mc_sum.values() - np.sqrt(mc_sum.variances()), [0])
+
+    ax.fill_between(
         hData.axes[0].edges,
         mcStatUp,
         mcStatDo,
-        step='post',
-        hatch='///',
-        facecolor='none',
-        edgecolor='gray',
+        step="post",
+        hatch="///",
+        facecolor="none",
+        edgecolor="gray",
         linewidth=0,
     )
-    
-    ax.errorbar(x=hData.axes[0].centers,
-                y=hData.values(),
-                yerr=np.sqrt(hData.values()),
-                color='black',
-                marker='.',
-                markersize=10,
-                linewidth=0,
-                elinewidth=1,
-                label="Data",
+
+    ax.errorbar(
+        x=hData.axes[0].centers,
+        y=hData.values(),
+        yerr=np.sqrt(hData.values()),
+        color="black",
+        marker=".",
+        markersize=10,
+        linewidth=0,
+        elinewidth=1,
+        label="Data",
     )
-    
-    #Ratio plot
-    ratio_mcStatUp = np.append(1 + np.sqrt(mc_sum.variances())/mc_sum.values(),[0])
-    ratio_mcStatDo = np.append(1 - np.sqrt(mc_sum.variances())/mc_sum.values(),[0])
-    
-        
-    ratio_uncertainty_band = rax.fill_between(
+
+    # Ratio plot
+    ratio_mcStatUp = np.append(1 + np.sqrt(mc_sum.variances()) / mc_sum.values(), [0])
+    ratio_mcStatDo = np.append(1 - np.sqrt(mc_sum.variances()) / mc_sum.values(), [0])
+
+    rax.fill_between(
         hData.axes[0].edges,
         ratio_mcStatUp,
         ratio_mcStatDo,
-        step='post',
-        color='lightgray',
+        step="post",
+        color="lightgray",
     )
-    
+
     hist_1_values, hist_2_values = hData.values(), mc_sum.values()
-    
+
     ratios = hist_1_values / hist_2_values
     ratio_uncert = hist.intervals.ratio_uncertainty(
         num=hist_1_values,
         denom=hist_2_values,
         uncertainty_type="poisson",
-        
     )
     # ratio: plot the ratios using Matplotlib errorbar or bar
     hist.plot.plot_ratio_array(
-        hData, ratios, ratio_uncert, ax=rax, uncert_draw_type='line',
-    );
-    #hData is just used for its bins in the above line
-    
-    if (not lumi is None) or (not year is None):
-        hep.cms.label(ax=ax,lumi=lumi,year=year,loc=1,fontsize=12,lumi_format='{:.1f}',com=com)
-    if ((not lumi is None) or (not year is None)) and (title_pos is None):
-        ax.set_title(title,y=1.07,pad=2,fontsize=14)
+        hData,
+        ratios,
+        ratio_uncert,
+        ax=rax,
+        uncert_draw_type="line",
+    )
+    # hData is just used for its bins in the above line
+
+    if (lumi is not None) or (year is not None):
+        hep.cms.label(
+            ax=ax,
+            lumi=lumi,
+            year=year,
+            loc=1,
+            fontsize=12,
+            lumi_format="{:.1f}",
+            com=com,
+        )
+    if ((lumi is not None) or (year is not None)) and (title_pos is None):
+        ax.set_title(title, y=1.07, pad=2, fontsize=14)
     else:
-        ax.set_title(title,y=title_pos,pad=2,fontsize=14)
-    ax.legend(fontsize=10, loc='upper right', bbox_to_anchor=(1.0+legend_xoffset,0.999)).shadow=True
-    ax.set_ylabel('Events',fontsize=10)
-    if not xlabel is None:
-        rax.set_xlabel(xlabel,fontsize=10,labelpad=2)
-    if not xlim is None:
-        ax.set_xlim(xlim[0],xlim[1])
+        ax.set_title(title, y=title_pos, pad=2, fontsize=14)
+    ax.legend(
+        fontsize=10, loc="upper right", bbox_to_anchor=(1.0 + legend_xoffset, 0.999)
+    ).shadow = True
+    ax.set_ylabel("Events", fontsize=10)
+    if xlabel is not None:
+        rax.set_xlabel(xlabel, fontsize=10, labelpad=2)
+    if xlim is not None:
+        ax.set_xlim(xlim[0], xlim[1])
     else:
-        ax.set_xlim(0,ax.get_xlim()[1]*1.2)
+        ax.set_xlim(0, ax.get_xlim()[1] * 1.2)
     if logy:
         ax.semilogy()
 
@@ -496,4 +675,4 @@ def plot_wRatio(hMCs,hData,MC_labels,title,sgl_hists=None,sgl_label=None,signal_
         plt.show()
     else:
         plt.savefig(outfile)
-        print("Saved output to {}".format(outfile))
+        print(f"Saved output to {outfile}")
