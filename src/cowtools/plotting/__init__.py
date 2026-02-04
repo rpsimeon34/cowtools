@@ -10,5 +10,5 @@ __all__ = [
     "plot_2d_ax",
     "plot_2d",
     "plot_2d_tofile",
-    "plot_wRatio"
+    "plot_wRatio",
 ]

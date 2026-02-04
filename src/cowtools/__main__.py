@@ -4,5 +4,3 @@
 from cowtools.jobqueue import GetCondorClient
 
 GetCondorClient()
-
-
