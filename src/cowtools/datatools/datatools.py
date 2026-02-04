@@ -17,22 +17,27 @@ DEFAULT_GROUPING_MAP = {
 
 def combine_rename_results(in_hists, grouping_map=None, short_name_map=None):
     """
-    Take a dictionary mapping dataset names to dictionaries of analysis results, and group certain datasets together
-    under one name, while also replacing some dataset names with shorter versions.
+    Take a dictionary mapping dataset names to dictionaries of analysis results, and
+    group certain datasets together under one name, while also replacing some dataset
+    names with shorter versions.
 
-    Note: Be careful that two functions in grouping_map cannot both be True for the same input dset name. If that
-    happens, it is not guaranteed which grouped dataset dset's results will be a part of.
+    Note: Be careful that two functions in grouping_map cannot both be True for the
+    same input dset name. If that happens, it is not guaranteed which grouped dataset
+    dset's results will be a part of.
 
     Inputs:
-        in_hists: (dict) Values are dicts containing things that can be added (hists, floats, etc.)
-        grouping_map: (dict) Keys are grouped dset names, and values are functions with signature fn(dset) for
-                      dset a str. If fn(dset) evaluates to True, then in_hists[dset]'s values are accumulated
-                      together with other dsets passing fn in the output hist.
-        short_name_map: (dict) Keys are same as keys from in_hists. If a dset that is a key in in_hists passes no
-                        functions from grouping_map, but is a key in short_name_map, then short_name_map[dset]
-                        is the new dset name in the output hist.
+        in_hists: (dict) Values are dicts containing things that can be added (hists,
+                  floats, etc.)
+        grouping_map: (dict) Keys are grouped dset names, and values are functions with
+                      signature fn(dset) for dset a str. If fn(dset) evaluates to True,
+                      then in_hists[dset]'s values are accumulated together with other
+                      dsets passing fn in the output hist.
+        short_name_map: (dict) Keys are same as keys from in_hists. If a dset that is a
+                        key in in_hists passes no functions from grouping_map, but is a
+                        key in short_name_map, then short_name_map[dset] is the new
+                        dset name in the output hist.
     """
-    # Check that grouping_map's keys and short_name_map's values have no strings in common
+    # Check that grouping_map's keys and short_name_map's values have no common strings
     if short_name_map is None:
         short_name_map = {}
     if grouping_map is None:
@@ -43,17 +48,19 @@ def combine_rename_results(in_hists, grouping_map=None, short_name_map=None):
     if _names_in_both != set():
         warnings.warn(
             f"""
-                        Warning: grouping_map and short_name_map both indicate that they would like to create
-                        datasets in the output dict with the following names: {_names_in_both}. This may lead
-                        to some results overwriting others. This is only safe if every dset pointing to a shared
-                        group name in short_name_map passes a function in grouping_map. Proceed with caution!"""
+            Warning: grouping_map and short_name_map both indicate that they would like
+            to create datasets in the output dict with the following names:
+            {_names_in_both}. This may lead to some results overwriting others. This is
+            only safe if every dset pointing to a shared group name in short_name_map
+            passes a function in grouping_map. Proceed with caution!"""
         )
 
     # Initialize output hist
     out_dict = {}
 
     for dset, results in in_hists.items():
-        is_in_group = False  # control for whether or not dset should have its own (ungrouped) key in output
+        # control for whether or not dset should have its own (ungrouped) key in output
+        is_in_group = False
         for group_name, fn in grouping_map.items():
             if not fn(dset):
                 continue
@@ -66,11 +73,11 @@ def combine_rename_results(in_hists, grouping_map=None, short_name_map=None):
                         out_dict[group_name][obs_name] += obs
                     except KeyError:
                         raise ValueError(
-                            """Two result histograms cannot be grouped together due to different
-                                            structures. Please make sure that all values in in_hists have the
-                                            same set of keys."""
+                            """Two result histograms cannot be grouped together due to
+                            different structures. Please make sure that all values in
+                            in_hists have the same set of keys."""
                         )
-            # At this point, we should not check other group_names, since we already accumulated the results
+            # Do not check other group_names, since we already accumulated the results
             is_in_group = True
             break
         if not is_in_group:
@@ -91,12 +98,12 @@ def scale_results(mc, lumi, mc_xsecs, mc_evt_cnts, verbose=False, dont_scale=Non
         lumi: (float | int) Luminosity to scale to
         mc_xsecs: (dict) Map keys from mc to their cross sections
         mc_evt_cnts: (dict) Map keys from mc to their raw event counts
-        dont_scale: (iterable, optional) An iterable of things to not scale. These are keys
-            in the dicts that are themselves values of mc.
+        dont_scale: (iterable, optional) An iterable of things to not scale. These are
+                    keys in the dicts that are themselves values of mc.
 
     Outputs:
-        Hist with the same structure as mc, except results are scaled to lumi according to
-        mc_xsecs and mc_evt_cnts
+        Hist with the same structure as mc, except results are scaled to lumi according
+        to mc_xsecs and mc_evt_cnts
     """
     # If mc is a string, treat as filepath and retrieve results
     if dont_scale is None:
@@ -106,8 +113,9 @@ def scale_results(mc, lumi, mc_xsecs, mc_evt_cnts, verbose=False, dont_scale=Non
         if not mc.endswith(".pkl"):
             warnings.warn(
                 f"""
-                            Warning: arg mc is {mc}, and is type str, but does not end in '.pkl'. Trying to read with pickle
-                            anyway. If this is not desired, please retrieve the hist of results and pass that as mc arg."""
+                Warning: arg mc is {mc}, and is type str, but does not end in '.pkl'.
+                Trying to read with pickle anyway. If this is not desired, please
+                retrieve the hist of results and pass that as mc arg."""
             )
         with open(mc, "rb") as f:
             mc = pickle.load(f)
@@ -138,38 +146,46 @@ class XSecScaler:
         grouping_map_data=None,
     ):
         """
-        This is an opinionated class. It essentially is scaffolding for cowtools.scale_results and
-        cowtools.combine_rename_results. Those functions can be used to make an implementation that may be
-        more flexible and/or suitable for different analysis frameworks.
+        This is an opinionated class. It essentially is scaffolding for
+        cowtools.datatools.scale_results and cowtools.datatools.combine_rename_results.
+        Those functions can be used to make an implementation that may be more flexible
+        and/or suitable for different analysis frameworks.
 
-        Take analysis results from data and MC samples and scale the MC results to the luminosity reported
-        in the data results. Also, optionally rename datasets to shorter names and combine multiple datasets
-        under common names. Beware that the units for cross sections and luminosities are assumed to be in
-        pb and /pb.
+        Take analysis results from data and MC samples and scale the MC results to the
+        luminosity reported in the data results. Also, optionally rename datasets to
+        shorter names and combine multiple datasets under common names. Beware that the
+        units for cross sections and luminosities are assumed to be in pb and /pb.
 
         This class makes certain assumptions about the structure of the dictionaries
         passed to the constructor. These are:
           - For every key,value pair in data, value has a key "Luminosity"
-          - For every key,value pair in fs_mc, value["metadata"]["metadata"]["xsec"] exists
+          - For every key,value pair in fs_mc, value["metadata"]["metadata"]["xsec"]
+            exists
           - For every key,value pair in MC, value has a key "RawEventCount"
 
         Inputs:
-            data: (dict | str) Maps dataset names to dicts, which map strings to hists, floats, and other things
-                  that can be added together. Satisfies the key assumptions listed above. If a str, must be an
-                  accessible pickle file.
-            mc: (dict | str) Maps dataset names to dicts, which map strings to hists, floats, and other things
-                that can be added together. Satisfies the key assumptions listed above. If a str, must be an
-                accessible pickle file.
-            fs_data: (dict | str) A coffea input fileset. If short names are desired, input as
-                     fs_data[dset]["metadata"]["short_name"]. If a str, must be gzipped, accessible, json file.
-            fs_mc: (dict | str) A coffea input fileset. If short names are desired, input as
-                   fs_mc[dset]["metadata"]["short_name"]. If a str, must be gzipped, accessible, json file.
-            grouping_map_mc: (dict, optional) Map dataset group names group_name to functions with signature
-                             fn(dset). If fn(dset) is True, then the results of dset will be grouped into a larger
+            data: (dict | str) Maps dataset names to dicts, which map strings to hists,
+                  floats, and other things that can be added together. Satisfies the
+                  key assumptions listed above. If a str, must be an accessible pickle
+                  file.
+            mc: (dict | str) Maps dataset names to dicts, which map strings to hists,
+                floats, and other things that can be added together. Satisfies the key
+                assumptions listed above. If a str, must be an accessible pickle file.
+            fs_data: (dict | str) A coffea input fileset. If short names are desired,
+                     input as fs_data[dset]["metadata"]["short_name"]. If a str, must
+                     be gzipped, accessible, json file.
+            fs_mc: (dict | str) A coffea input fileset. If short names are desired,
+                   input as fs_mc[dset]["metadata"]["short_name"]. If a str, must be
+                   gzipped, accessible, json file.
+            grouping_map_mc: (dict, optional) Map dataset group names group_name to
+                             functions with signature fn(dset). If fn(dset) is True,
+                             then the results of dset will be grouped into a larger
                              dataset with name group_name. This is for the MC samples.
-            grouping_map_data: (dict, optional) Map dataset group names group_name to functions with signature
-                             fn(dset). If fn(dset) is True, then the results of dset will be grouped into a larger
-                             dataset with name group_name. This is for the data samples.
+            grouping_map_data: (dict, optional) Map dataset group names group_name to
+                               functions with signature fn(dset). If fn(dset) is True,
+                               then the results of dset will be grouped into a larger
+                               dataset with name group_name. This is for the data
+                               samples.
         """
         # Load filesets, if they are strings (assuming they are paths to jsons)
         if grouping_map_data is None:
@@ -233,9 +249,9 @@ class XSecScaler:
     @property
     def scaled_combined_mc(self):
         """
-        MC results, scaled to luminosity from the data results and then accumulated under group
-        names provided by grouping_map_mc, or renamed according to short_names from fs_mc, if
-        provided.
+        MC results, scaled to luminosity from the data results and then accumulated
+        under group names provided by grouping_map_mc, or renamed according to
+        short_names from fs_mc, if provided.
         """
         if self._scaled_combined_mc is None:
             self._scale_combine_mc()
@@ -255,8 +271,8 @@ class XSecScaler:
     @property
     def combined_data(self):
         """
-        Data results, accumulated under group names provided by grouping_map_data, or renamed
-        according to short_names from fs_data, if provided.
+        Data results, accumulated under group names provided by grouping_map_data, or
+        renamed according to short_names from fs_data, if provided.
         """
         if self._combined_data is None:
             self._combine_data()

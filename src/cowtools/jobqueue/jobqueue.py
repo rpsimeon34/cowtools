@@ -20,21 +20,22 @@ def GetCondorClient(
     request_GPUs=None,
 ):
     """
-    Get a dask.distributed.Client object that can be used for distributed computation with
-    an HTCondorCluster. Assumes some default settings for the cluster, including a reasonable
-    timeout, location for log/output/error files, and image file to ship.
+    Get a dask.distributed.Client object that can be used for distributed computation
+    with an HTCondorCluster. Assumes some default settings for the cluster, including
+    a reasonable timeout, location for log/output/error files, and image file to ship.
 
     Inputs:
         x509_path: (str) Path to the x509 proxy to ship to workers.
         container_image: (str) Path to the image to be sent to worker nodes. Must be
                     something that HTCondor accepts under the "container_image"
                     classAd.
-        ship_env: (bool) If True, run jobs on workers in the same python virtual environment
-                    as the one in which the scheduler operates.
-        transfer_input_files: (list[str]) A python list of filepaths leading to files to be
-                            sent to workers.
-        request_GPUs: (str | int) The number of GPUs per job to request. If None, no GPUs will
-                    be requested. If an int, will be converted into a string.
+        ship_env: (bool) If True, run jobs on workers in the same python virtual
+                  environment as the one in which the scheduler operates.
+        transfer_input_files: (list[str]) A python list of filepaths leading to files
+                              to be sent to workers.
+        request_GPUs: (str | int) The number of GPUs per job to request. If None, no
+                      GPUs will be requested. If an int, will be converted into a
+                      string.
 
     Returns:
         (dask.distributed.Client) A client connected to an HTCondor cluster.
@@ -93,7 +94,7 @@ def GetCondorClient(
         new_path_parts = ":".join(env_pkgs_worker)
         job_script_prologue.append(f"export PYTHONPATH=$PYTHONPATH:{new_path_parts}")
         other_htc_kwargs["python"] = "/usr/local/bin/python3"
-    # If not shipping env, but python process is running with a venv python, switch pythons
+    # If not shipping env, but python is running with a venv python, switch pythons
     elif _find_env() is None:
         pass  # Do nothing
     elif Path(_find_env()) in Path(sys.executable).parents:
@@ -171,7 +172,8 @@ def _find_image():
     if custom_sif.is_file():
         return str(custom_sif)
 
-    # If there is no custom SIF, but an image source is given in container_info_file, use that
+    # If there is no custom SIF, but an image source is given in container_info_file,
+    # use that
     container_info_file = Path("/container_info.yml")
     if container_info_file.is_file():
         with open(container_info_file) as f:
@@ -225,10 +227,11 @@ def _find_image():
         return best_loc
 
     raise Exception(
-        f"""Could not automatically find an image to ship to workers.
-                     This likely means that there is no metadata file "{container_info_file}".
-                     Please explicitly specify the image to be used on workers to GetCondorClient
-                     with the container_image keyword."""
+        f"""
+        Could not automatically find an image to ship to workers.
+        This likely means that there is no metadata file "{container_info_file}".
+        Please explicitly specify the image to be used on workers to GetCondorClient
+        with the container_image keyword."""
     )
 
 

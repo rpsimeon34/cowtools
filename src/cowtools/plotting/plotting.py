@@ -337,7 +337,8 @@ def plot_1d_sgl_stack_tofile(outfile, *args, **kwargs):
     Inputs
     ------
     *args:
-        Arguments to pass to plot_1d_sgl_stack_ax, except ax. Do not include an arg for ax.
+        Arguments to pass to plot_1d_sgl_stack_ax, except ax. Do not include an arg
+        for ax.
     **kwargs:
         Keyword arguments to pass to plot_1d_ax
     """
@@ -371,8 +372,8 @@ def plot_2d_ax(
     flow="hint",
 ):
     """
-    Plot a 2D histogram with various customizations, including writing "CMS Preliminary", writing
-    the COM energy, potentially the luminosity, year, and title.
+    Plot a 2D histogram with various customizations, including writing "CMS
+    Preliminary", writing the COM energy, potentially the luminosity, year, and title.
 
     Inputs
     ------
@@ -503,9 +504,10 @@ def plot_wRatio(
     outfile=None,
 ):
     """
-    Plot histograms as in plot_1d_ax, but also with data overlayed as scatter points. Also show a second pane underneath
-    with the data/MC-ratio. Includes statistical uncertainties on both MC and data. Optionally also plots the signal MC
-    distribution overlayed on the top pane as a step-type (unfilled bar) histogram.
+    Plot histograms as in plot_1d_ax, but also with data overlayed as scatter points.
+    Also show a second pane underneath with the data/MC-ratio. Includes statistical
+    uncertainties on both MC and data. Optionally also plots the signal MC distribution
+    overlayed on the top pane as a step-type (unfilled bar) histogram.
 
     Note that hMCs have to use hist.storage.Weight() as storage, otherwise
     we cannot add them together and get variances.
@@ -513,22 +515,24 @@ def plot_wRatio(
     Inputs
     ------
     hMCs: iterable[hist.Hists]
-        An iterable of 1D histograms to plot, representing MC results. Histograms in this iterable must all have
-        the same binning. Must use hist.storage.Weight() as storage, otherwise we cannot add them together and
-        get variances/uncertainties.
+        An iterable of 1D histograms to plot, representing MC results. Histograms in
+        this iterable must all have the same binning. Must use hist.storage.Weight() as
+        storage, otherwise we cannot add them together and get variances/uncertainties.
     hData: hist.Hist
         A single histogram representing the data
     MC_labels: iterable[str]
-        An iterable of strings with the labels for the MC histograms. Must be in the same order as the histograms
-        in hMCs.
+        An iterable of strings with the labels for the MC histograms. Must be in the
+        same order as the histograms in hMCs.
     title: str
         Title of the plot
     sgl_hists: iterable[hist.Hists], optional
         Signal MC histograms to be overlayed on the plot
     sgl_label: iterable[str], optional
-        Labels for the signal MC histograms in sgl_hists. Must be in the same order as the histograms in sgl_hists.
+        Labels for the signal MC histograms in sgl_hists. Must be in the same order as
+        the histograms in sgl_hists.
     signal_sf: float, default 1
-        Scale sgl_hists on the plot by this factor. Useful for making sure sgl_hists are visible.
+        Scale sgl_hists on the plot by this factor. Useful for making sure sgl_hists
+        are visible.
     lumi: float, default 100.0
         The luminosity of information shown in the plot
     year: int, default 2023
@@ -542,8 +546,8 @@ def plot_wRatio(
     xlabel: str, optional
         Label for the x-axis
     xlim: iterable[float] of length 2, optional
-        Range of the x-axis to display. First element is the lower bound. If not given, limits will be inferred
-        using the provided histograms.
+        Range of the x-axis to display. First element is the lower bound. If not given,
+        limits will be inferred using the provided histograms.
     logy: bool, default False
         If True, show the y-axis on a log scale
     outfile: str, optional
