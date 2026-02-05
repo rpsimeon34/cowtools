@@ -6,6 +6,8 @@ cms01.hep.wisc.edu via ssh, and then launch a container that can install `cowtoo
 `singularity exec --bind /scratch/rsimeon/:/scratch/rsimeon /scratch/rsimeon/notebook.sif /bin/bash`.
 From there, one can `python3 -m pip install .[dev]` and `python3 -m nox -s tests` to run the tests.
 
+To check formatting, run `pre-commit run -a`.
+
 It is in principle possible to set up automated testing (CI/CD) via Github workflows in a way that
 interacts nicely with the Condor requests in `cowtools`. If you are interested in adding this feature,
 please fork the repo and create a pull request when you are ready.
