@@ -19,16 +19,19 @@ dependencies = [
     "dask>=2024.1.0",
     "setuptools>=68.1.2",
     "hist",
+    "scipy",
     "mplhep"
 ]
 
 [project.optional-dependencies]
 test = [
-    "pytest"
+    "pytest",
+    "pytest-mpl"
 ]
 
 dev = [
     "pytest",
+    "pytest-mpl",
     "pre-commit",
     "nox"
 ]
