@@ -140,7 +140,11 @@ def GetCondorClient(
 def _find_env():
     # Find the virtual environment and list it as a directory to be transferred
     env_path = os.getenv("VIRTUAL_ENV", None)
-    return env_path.strip('\u201c').strip('\u201d') #Remove extra quotes if they appear
+    if isinstance(env_path, str):
+        env_path = env_path.strip("\u201c").strip(
+            "\u201d"
+        )  # Remove extra quotes if they appear
+    return env_path
 
 
 def _find_env_packages():
