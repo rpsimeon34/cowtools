@@ -96,10 +96,8 @@ def GetCondorClient(
         other_htc_kwargs["python"] = "/usr/local/bin/python3"
     # If not shipping env, but python is running with a venv python, switch pythons
     elif _find_env() is None:
-        print("Found no env, not shipping env")
         pass  # Do nothing
-    elif Path(_find_env()).resolve() in Path(sys.executable).parents:
-        print("Found env, not shipping env")
+    elif Path(_find_env()) in Path(sys.executable).parents:
         other_htc_kwargs["python"] = "/usr/local/bin/python3"
     if job_extra_directives["transfer_input_files"] == []:
         # no files are set to be transferred
@@ -144,7 +142,7 @@ def _find_env():
         env_path = env_path.strip("\u201c").strip(
             "\u201d"
         )  # Remove extra quotes if they appear
-    return env_path
+    return str(Path(env_path).resolve()) # resolve symlinks
 
 
 def _find_env_packages():
