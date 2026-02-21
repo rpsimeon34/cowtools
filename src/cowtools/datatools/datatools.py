@@ -108,7 +108,7 @@ def scale_results(mc, lumi, mc_xsecs, mc_evt_cnts, verbose=False, dont_scale=Non
     """
     # If mc is a string, treat as filepath and retrieve results
     if dont_scale is None:
-        dont_scale = ["RawEventCount"]
+        dont_scale = ["RawEventCount","sumGenW"]
     if isinstance(mc, str):
         # If strings end in .pkl, use pickle to load
         if not mc.endswith(".pkl"):
@@ -163,7 +163,7 @@ class XSecScaler:
           - For every key,value pair in data, value has a key "Luminosity"
           - For every key,value pair in fs_mc, value["metadata"]["metadata"]["xsec"]
             exists
-          - For every key,value pair in MC, value has a key "RawEventCount"
+          - For every key,value pair in MC, value has a key "RawEventCount" OR "sumGenW"
 
         Inputs:
             data: (dict | str) Maps dataset names to dicts, which map strings to hists,
@@ -245,7 +245,10 @@ class XSecScaler:
                 mc_xsecs[dset] = self.fs_mc[dset]["metadata"]["xsec"]
             except KeyError:
                 mc_xsecs[dset] = self.fs_mc[dset]["metadata"]["metadata"]["xsec"]
-            mc_evt_cnts[dset] = self.mc[dset]["RawEventCount"]
+            try:
+                mc_evt_cnts[dset] = self.mc[dset]["sumGenW"]
+            except KeyError:
+                mc_evt_cnts[dset] = self.mc[dset]["RawEventCount"]
         self._scaled_mc = scale_results(self.mc, self.lumi, mc_xsecs, mc_evt_cnts)
 
     @property
