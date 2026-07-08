@@ -18,6 +18,7 @@ def GetCondorClient(
     ship_env=False,
     transfer_input_files=None,
     request_GPUs=None,
+    wisc_machine=False,
 ):
     """
     Get a dask.distributed.Client object that can be used for distributed computation
@@ -114,6 +115,9 @@ def GetCondorClient(
 
     if "transfer_input_files" in job_extra_directives:
         job_extra_directives["should_transfer_files"] = "YES"
+
+    if wisc_machine:
+        requirements = r'regexp(".*\.chtc\.wisc\.edu", Machine) == False'
 
     if requirements:
         job_extra_directives["Requirements"] = requirements
