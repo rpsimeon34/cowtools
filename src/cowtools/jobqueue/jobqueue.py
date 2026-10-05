@@ -1,44 +1,52 @@
 import os
+import subprocess
 import sys
 from pathlib import Path
+from typing import List, Optional, Tuple
 
 import yaml
+import json
+import importlib_metadata
 from dask.distributed import Client
 from dask_jobqueue import HTCondorCluster
 
 
 def GetCondorClient(
-    x509_path=None,
-    container_image=None,
-    maximum=None,
-    max_workers=None,  # max_workers is synonym for 'maximum'
-    memory="2 GB",
-    disk="1 GB",
-    requirements=None,
-    ship_env=False,
-    transfer_input_files=None,
-    request_GPUs=None,
-):
+    x509_path: Optional[str] = None,
+    container_image: Optional[str] = None,
+    maximum: Optional[int] = None,
+    max_workers: Optional[int] = None,  # max_workers is synonym for 'maximum'
+    memory: str = "2 GB",
+    disk: str = "1 GB",
+    requirements: Optional[str] = None,
+    ship_env: bool = False,
+    transfer_input_files: Optional[List[str]] = None,
+    request_GPUs: Optional[str | int] = None,
+) -> Client:
     """
     Get a dask.distributed.Client object that can be used for distributed computation
     with an HTCondorCluster. Assumes some default settings for the cluster, including
     a reasonable timeout, location for log/output/error files, and image file to ship.
 
-    Inputs:
-        x509_path: (str) Path to the x509 proxy to ship to workers.
-        container_image: (str) Path to the image to be sent to worker nodes. Must be
-                    something that HTCondor accepts under the "container_image"
-                    classAd.
-        ship_env: (bool) If True, run jobs on workers in the same python virtual
-                  environment as the one in which the scheduler operates.
-        transfer_input_files: (list[str]) A python list of filepaths leading to files
-                              to be sent to workers.
-        request_GPUs: (str | int) The number of GPUs per job to request. If None, no
-                      GPUs will be requested. If an int, will be converted into a
-                      string.
+    Parameters
+    ----------
+        x509_path: str
+            Path to the x509 proxy to ship to workers.
+        container_image: str
+            Path to the image to be sent to worker nodes. Must be 
+            something that HTCondor accepts under the "container_image" classAd.
+        ship_env: bool 
+            If True, run jobs on workers in the same python virtual
+            environment as the one in which the scheduler operates.
+        transfer_input_files: List[str]
+            A python list of filepaths leading to files to be sent to workers.
+        request_GPUs: (str | int) 
+            The number of GPUs per job to request. If None, no GPUs will be requested. 
+            If an int, will be converted into a string.
 
-    Returns:
-        (dask.distributed.Client) A client connected to an HTCondor cluster.
+    Returns
+    -------
+        A dask.distributed.Client client connected to an HTCondor cluster.
     """
 
     # Make maximum and max_workers a synonym
@@ -135,7 +143,7 @@ def GetCondorClient(
     return Client(cluster)
 
 
-def _find_env():
+def _find_env() -> None | str:
     # Find the virtual environment and list it as a directory to be transferred
     env_path = os.getenv("VIRTUAL_ENV", None)
     if isinstance(env_path, str):
@@ -146,7 +154,7 @@ def _find_env():
     return  resolved_path
 
 
-def _find_env_packages():
+def _find_env_packages() -> Tuple[List, List]:
     # Find the virtual environment and list it as a directory to be transferred
     try:
         env_path = Path(_find_env())
@@ -168,10 +176,27 @@ def _find_env_packages():
                 env_path.parent
             ).resolve()  # resolve symlinks
             pkgs_worker.append(os.path.basename(str(out_path)))
+
+    # Add any editable installations whose sources live outside the venv
+    for dist in importlib_metadata.distributions():
+        direct_url_text = dist.read_text("direct_url.json")
+        if direct_url_text is None:
+            continue  # not installed via -e or any direct path/URL
+
+        direct_url = json.loads(direct_url_text)
+        if not direct_url.get("dir_info", {}).get("editable"):
+            continue  # installed, but not editable
+
+        source_path = Path(direct_url["url"].removeprefix("file://")).resolve()
+
+        if source_path.is_dir():
+            pkgs_sched.append(str(source_path))
+            pkgs_worker.append(str(source_path.name))
+
     return pkgs_sched, pkgs_worker
 
 
-def _find_image():
+def _find_image() -> str:
     custom_sif = Path(f"/scratch/{os.environ['USER']}/notebook.sif")
     # If there is a custom SIF at /scratch/${USER}/notebook.sif, use that
     if custom_sif.is_file():
@@ -240,9 +265,9 @@ def _find_image():
     )
 
 
-def _find_x509(x509_path):
+def _find_x509(x509_path: str) -> None | str:
     """
-    Attempt to find the voms x509 proxy.
+    Attempts to find the voms x509 proxy. Also checks if a found proxy is valid for at least one hour.
     """
 
     if x509_path and os.path.isfile(x509_path):
@@ -254,20 +279,19 @@ def _find_x509(x509_path):
         return None
     else:
         # try to find voms proxy automatically
+        # Check if the proxy is valid for at least one hour
         try:
-            _x509_localpath = (
-                next(
-                    line
-                    for line in os.popen("voms-proxy-info").read().split("\n")
-                    if line.startswith("path")
-                )
-                .split(":")[-1]
-                .strip()
+            subprocess.run(
+                "voms-proxy-info -exists -valid 01:00", shell=True, check=True
             )
-        except Exception:
-            print("Could not find voms proxy, but continuing anyway.")
-            print("Xrootd transfers will most likely fail.")
+        except subprocess.CalledProcessError:
+            print("VOMS proxy either is expired, expires within one hour, or does not exist. Please run `voms-proxy-init -voms cms -rfc -valid 200:0`")
+            print("Continuing anyway, XRootD transfers will most likely fail.")
             return None
+        
+        _x509_localpath = subprocess.check_output(
+            "voms-proxy-info -path", shell=True, text=True
+        ).strip()
 
         return _x509_localpath
 
