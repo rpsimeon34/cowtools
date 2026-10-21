@@ -5,8 +5,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import yaml
-import json
-import importlib_metadata
+import site
 from dask.distributed import Client
 from dask_jobqueue import HTCondorCluster
 
@@ -178,21 +177,13 @@ def _find_env_packages() -> Tuple[List, List]:
             pkgs_worker.append(os.path.basename(str(out_path)))
 
     # Add any editable installations whose sources live outside the venv
-    for dist in importlib_metadata.distributions():
-        direct_url_text = dist.read_text("direct_url.json")
-        if direct_url_text is None:
-            continue  # not installed via -e or any direct path/URL
-
-        direct_url = json.loads(direct_url_text)
-        if not direct_url.get("dir_info", {}).get("editable"):
-            continue  # installed, but not editable
-
-        source_path = Path(direct_url["url"].removeprefix("file://")).resolve()
-
+    site_packages_dir = Path(site.getsitepackages()[0])
+    for pth_file in site_packages_dir.glob("__editable__*.pth"):
+        source_path = Path(pth_file.read_text().strip()).resolve()
         if source_path.is_dir():
             pkgs_sched.append(str(source_path))
-            pkgs_worker.append(str(source_path.name))
-
+            pkgs_worker.append(source_path.name)
+    
     return pkgs_sched, pkgs_worker
 
 
