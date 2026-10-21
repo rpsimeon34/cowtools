@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import yaml
+import site
 from dask.distributed import Client
 from dask_jobqueue import HTCondorCluster
 
@@ -168,6 +169,15 @@ def _find_env_packages():
                 env_path.parent
             ).resolve()  # resolve symlinks
             pkgs_worker.append(os.path.basename(str(out_path)))
+
+    # Add any editable installations whose sources live outside the venv
+    site_packages_dir = Path(site.getsitepackages()[0])
+    for pth_file in site_packages_dir.glob("__editable__*.pth"):
+        source_path = Path(pth_file.read_text().strip()).resolve()
+        if source_path.is_dir():
+            pkgs_sched.append(str(source_path))
+            pkgs_worker.append(source_path.name)
+    
     return pkgs_sched, pkgs_worker
 
 
